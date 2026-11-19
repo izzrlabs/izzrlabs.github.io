@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your computeIfAbsent cache will crash on recursion (HashMap and ConcurrentHashMap) — IZZR Labs</title>
+  <meta name="description" content="Memoizing a recursive function with computeIfAbsent throws ConcurrentModificationException on HashMap and IllegalStateException on ConcurrentHashMap. Here is why, and the fix.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="IZZR Labs">
+  <meta property="og:title" content="Your computeIfAbsent cache will crash on recursion (HashMap and ConcurrentHashMap)">
+  <meta property="og:description" content="Memoizing a recursive function with computeIfAbsent throws ConcurrentModificationException on HashMap and IllegalStateException on ConcurrentHashMap. Here is why, and the fix.">
+  <meta property="og:url" content="https://izzrlabs.github.io/blog/computeifabsent-recursive-update.html">
+  <meta property="og:image" content="https://izzrlabs.github.io/assets/img/izzrlabs-logo.png">
+  <meta property="og:image:alt" content="IZZR Labs logo: a black flask icon with the letters IZ, on an orange background">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://izzrlabs.github.io/blog/computeifabsent-recursive-update.html">
+  <link rel="alternate" type="application/rss+xml" title="IZZR Labs blog" href="https://izzrlabs.github.io/feed.xml">
+  <link rel="icon" href="../favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="../assets/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="site-logo" href="../index.html">IZZR Labs</a>
+      <nav class="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="../products.html">Products</a></li>
+          <li><a href="index.html" aria-current="page">Blog</a></li>
+          <li><a href="../about.html">About</a></li>
+          <li><a href="../contact.html">Contact</a></li>
+        </ul>
+      </nav>
+      <nav class="lang-switch" aria-label="Language">
+        <ul>
+          <li><span aria-current="true">EN</span></li>
+          <li><a href="../pt/index.html" lang="pt-BR" hreflang="pt-BR">PT</a></li>
+          <li><a href="../es/index.html" lang="es" hreflang="es">ES</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="section">
+      <div class="container prose">
+        <h1>Your computeIfAbsent cache will crash on recursion (HashMap and ConcurrentHashMap)</h1>
+        <p class="post-meta"><time datetime="2026-11-19">November 19, 2026</time> &middot; 5 min read</p>
+
+        <p>Memoizing a recursive function with <code>computeIfAbsent</code> looks like a one-liner. On a <code>HashMap</code> it throws <code>ConcurrentModificationException</code>. On a <code>ConcurrentHashMap</code> it throws <code>IllegalStateException: Recursive update</code>. The fix is three steps: <code>get</code>, compute outside the map, then <code>putIfAbsent</code>.</p>
+        <p>Everything below runs as one file, <code>RecursiveMemo.java</code>, with <code>java RecursiveMemo.java</code> (no Maven). The output shown is from Java 17 (same on 21).</p>
+        <h2>The innocent version</h2>
+        <p>Fibonacci with a cache. The recursion lives inside the mapping function:</p>
+        <pre><code>static long brokenFib(Map&lt;Integer, Long&gt; cache, int n) {
+    if (n &lt; 2) return n;
+    return cache.computeIfAbsent(n,
+            k -&gt; brokenFib(cache, k - 1) + brokenFib(cache, k - 2));
+}</code></pre>
+        <p>It reads well, and it looks like exactly what <code>computeIfAbsent</code> is for: "get the value, or compute and store it."</p>
+        <h2>What happens when you run it</h2>
+        <p>I called <code>brokenFib(map, 30)</code> on each map type:</p>
+        <pre><code>HashMap: java.util.ConcurrentModificationException
+ConcurrentHashMap: java.lang.IllegalStateException: Recursive update</code></pre>
+        <p>Same code, two maps, two different exceptions, and neither message tells you what you did wrong.</p>
+        <h2>Why it fails</h2>
+        <p>The <code>Map.computeIfAbsent</code> javadoc says it plainly: the mapping function should not modify this map during computation. A recursive call that fills the cache does exactly that. The two maps just notice it in different ways.</p>
+        <p><strong>HashMap.</strong> Since Java 9, <code>HashMap.computeIfAbsent</code> remembers its internal <code>modCount</code> before it calls your function. When the function returns, it compares the two numbers. Your recursive calls inserted entries, so the count changed, and the map throws <code>ConcurrentModificationException</code>. Java 8 did not check, so the same code could silently corrupt the table. The new exception is the better outcome.</p>
+        <p><strong>ConcurrentHashMap.</strong> When the key's bin is empty, <code>computeIfAbsent</code> parks a placeholder (a <code>ReservationNode</code>) in it and holds that bin while your function runs. If your function lands back on a bin that is already reserved, the map sees a recursive update and throws. In Java 8 the same code could loop forever instead of failing fast.</p>
+        <p>One caveat: the CHM check is best-effort. It fires when the recursion hits a bin that is reserved or locked by a call further up the stack. A recursive function whose keys land in other bins can get through on some inputs and fail on others. That makes it worse, not safer. The javadoc says don't, so don't.</p>
+        <h2>The fix</h2>
+        <p>Do the lookup and the computation outside the map, and use the map only to store:</p>
+        <pre><code>static long fib(Map&lt;Integer, Long&gt; cache, int n) {
+    if (n &lt; 2) return n;
+    Long hit = cache.get(n);
+    if (hit != null) return hit;
+    long value = fib(cache, n - 1) + fib(cache, n - 2);
+    Long raced = cache.putIfAbsent(n, value);
+    return raced != null ? raced : value;
+}</code></pre>
+        <p><code>putIfAbsent</code> returns the existing value if another thread got there first, so on a <code>ConcurrentHashMap</code> every caller still ends up with the same answer. Output for both map types:</p>
+        <pre><code>HashMap fib(90)             = 2880067194370816120
+ConcurrentHashMap fib(90)   = 2880067194370816120
+iterative fib(90)           = 2880067194370816120</code></pre>
+        <p>The third line is the loop version, which needs no map at all. For Fibonacci specifically, the loop is the better answer. The <code>get</code> / compute / <code>putIfAbsent</code> pattern is for cases where the recursion is real, such as a tree or a dependency graph.</p>
+        <p>The trade-off: with this pattern two threads can compute the same key at the same time, and one result is thrown away. For pure functions that is harmless. If the computation is expensive or has side effects, you need something else (see the next section).</p>
+        <h2>What computeIfAbsent actually guarantees</h2>
+        <p>Don't throw the method away. On <code>ConcurrentHashMap</code>, the function runs at most once per absent key, even when threads race. I tested it with two threads released together by a <code>CountDownLatch</code>, both asking for the same key, with an <code>AtomicInteger</code> counting calls:</p>
+        <pre><code>function calls = 1, value = loaded</code></pre>
+        <p>The second thread blocks on the bin until the first finishes, then reads the stored value. That makes <code>computeIfAbsent</code> the right tool for "load this expensive thing once": reading a config file, opening a connection, building a parser. Keep it as short as you can: other writers to that bin wait while it runs, and it must not touch the map.</p>
+        <p>Short version:</p>
+        <ul>
+          <li>Function calls other code that never touches the map: use <code>computeIfAbsent</code>.</li>
+          <li>Function recurses through the same map: use <code>get</code>, compute, <code>putIfAbsent</code>, or a loop.</li>
+        </ul>
+        <h2>Where this shows up in interviews</h2>
+        <p>"What happens if two threads call <code>computeIfAbsent</code> on the same key?" is a classic Java interview question, and the recursive version is the follow-up that separates people who have read the javadoc from people who have only used the method.</p>
+        <p>Chapter 1 of my <a href="https://izzrlabs.gumroad.com/l/kxtubc" target="_blank" rel="noopener">Modern Java &amp; Spring Boot Interview Guide</a> (Core Java &amp; Collections) covers HashMap internals and concurrent collections, and the guide comes with a Maven repository of JUnit 5 tests you can run with <code>mvn test</code>. It's $29, one-time. The code in this post is separate and standalone: copy <code>RecursiveMemo.java</code>, run it, and change it until the exceptions stop surprising you.</p>
+
+        <p class="author">Israel Duarte, Java engineer &mdash; I write code first and claims second: every rule in this post came from a script that actually runs, not a slide. See what else I've <a href="../products.html">built</a>.</p>
+
+        <aside class="newsletter" aria-labelledby="newsletter-title">
+          <h2 id="newsletter-title">Get new posts by email</h2>
+          <p>One short email when a new post goes up: the title, a one-line summary and the link. Unsubscribe in one click.</p>
+          <form class="newsletter__form" action="https://buttondown.com/api/emails/embed-subscribe/israeltduarte" method="post">
+            <label for="newsletter-email">Your email</label>
+            <div class="newsletter__row">
+              <input type="email" id="newsletter-email" name="email" required autocomplete="email">
+              <button class="btn btn--primary" type="submit">Subscribe</button>
+            </div>
+          </form>
+          <p class="newsletter__note muted">Your email is kept by Buttondown, our newsletter service, and used only for these emails. <a href="../privacy.html">Privacy</a>.</p>
+        </aside>
+
+        <p><a href="index.html">Back to Blog</a></p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 IZZR Labs</p>
+      <ul class="footer-links">
+        <li><a href="../privacy.html">Privacy</a></li>
+        <li><a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">Gumroad store</a></li>
+        <li><a href="https://github.com/izzrlabs" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

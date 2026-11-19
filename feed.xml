@@ -7,6 +7,13 @@
     <description>Short, practical write-ups on Java, Spring Boot, and using Claude Code on real codebases.</description>
     <language>en</language>
     <item>
+      <title>Your computeIfAbsent cache will crash on recursion (HashMap and ConcurrentHashMap)</title>
+      <link>https://izzrlabs.github.io/blog/computeifabsent-recursive-update.html</link>
+      <guid>https://izzrlabs.github.io/blog/computeifabsent-recursive-update.html</guid>
+      <pubDate>Thu, 19 Nov 2026 12:00:00 +0000</pubDate>
+      <description>Why memoizing with computeIfAbsent throws on HashMap and ConcurrentHashMap, and the three-step fix.</description>
+    </item>
+    <item>
       <title>Stop Claude Code from finishing with a red build</title>
       <link>https://izzrlabs.github.io/blog/stop-claude-code-red-build.html</link>
       <guid>https://izzrlabs.github.io/blog/stop-claude-code-red-build.html</guid>
