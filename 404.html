@@ -44,6 +44,10 @@
     <section class="hero">
       <div class="container">
         <h1>Page not found</h1>
+        <!-- The plain-language line comes before the stack trace in the HTML
+             (not just visually) so a screen reader reaches the real answer
+             before the decorative "exception". -->
+        <p class="muted" id="notfound-help" data-pt="Essa página não existe, ou mudou de lugar. Os links acima levam de volta para o site." data-es="Esta página no existe, o cambió de lugar. Los enlaces de arriba te llevan de vuelta al sitio.">That page doesn't exist, or it moved. The links above take you back into the site.</p>
         <figure class="terminal">
           <figcaption class="terminal__title">izzrlabs ~ 404</figcaption>
           <pre class="terminal__log terminal__log--trace"><span class="terminal__err">Exception in thread "main" izzrlabs.PageNotFoundException: this page doesn't exist (or it moved)</span>
@@ -51,7 +55,6 @@
     at izzrlabs.Products.list(<a class="trace-link" href="/products.html" data-path="products.html">/products.html</a>)
     at izzrlabs.Blog.latest(<a class="trace-link" href="/blog/" data-path="blog/">/blog/</a>)</pre>
         </figure>
-        <p class="muted" id="notfound-help" data-pt="Essa página não existe, ou mudou de lugar. Os links acima levam de volta para o site." data-es="Esta página no existe, o cambió de lugar. Los enlaces de arriba te llevan de vuelta al sitio.">That page doesn't exist, or it moved. The links above take you back into the site.</p>
       </div>
     </section>
   </main>

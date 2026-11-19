@@ -473,10 +473,12 @@ textarea {
 
 /* ---------- Flip card (Products guide card) ----------
    No JS: question and answer stacked, button hidden.
-   With JS (.flip--js): both faces share one grid cell, so the card keeps
-   the height of the taller face and never shifts the page. */
+   With JS (.flip--js): the active face sits in normal flow (so the card
+   is only as tall as what's showing); the other face is absolutely
+   positioned over it for the 3D rotation, out of the flow.
+   No margin here: .flip is a direct child of the .card flex column, whose
+   own `gap` already spaces it from the siblings above and below. */
 .flip {
-  margin: var(--space-2) 0;
   padding: var(--space-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -507,27 +509,33 @@ textarea {
 }
 
 .flip--js .flip__inner {
-  display: grid;
+  position: relative;
   perspective: 1200px;
 }
 
 .flip--js .flip__face {
-  grid-area: 1 / 1;
   backface-visibility: hidden;
   transition: transform 0.5s ease, visibility 0s linear 0.25s;
 }
 
+/* The hidden face is taken out of flow and overlaid, so it never forces
+   the shown face's box to be as tall as the (much longer) answer. */
 .flip--js .flip__back {
+  position: absolute;
+  inset: 0;
   transform: rotateY(180deg);
   visibility: hidden;
 }
 
 .flip--js.is-flipped .flip__front {
+  position: absolute;
+  inset: 0;
   transform: rotateY(-180deg);
   visibility: hidden;
 }
 
 .flip--js.is-flipped .flip__back {
+  position: static;
   transform: rotateY(0deg);
   visibility: visible;
 }
@@ -728,3 +736,27 @@ textarea {
     margin-left: auto;
   }
 }
+
+/* ---------- Newsletter (blog) ---------- */
+.newsletter {
+  margin-top: var(--space-5, 2.5rem);
+  padding: var(--space-4, 1.5rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.newsletter h2 { margin-top: 0; }
+.newsletter label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--fg-muted);
+  margin-bottom: 0.35rem;
+}
+.newsletter__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.newsletter__row input { flex: 1 1 14rem; width: auto; min-width: 0; }
+.newsletter__row .btn { flex: 0 0 auto; }
+.newsletter__note { font-size: 0.85rem; margin-bottom: 0; }

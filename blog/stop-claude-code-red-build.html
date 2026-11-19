@@ -14,6 +14,7 @@
   <meta property="og:image:alt" content="IZZR Labs logo: a black flask icon with the letters IZ, on an orange background">
   <meta name="twitter:card" content="summary">
   <link rel="canonical" href="https://izzrlabs.github.io/blog/stop-claude-code-red-build.html">
+  <link rel="alternate" type="application/rss+xml" title="IZZR Labs blog" href="https://izzrlabs.github.io/feed.xml">
   <link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
@@ -167,6 +168,19 @@ exit 2  # blocks the Stop: Claude sees this stderr and keeps working instead of 
         <p>This hook, and two others that block an obvious secret before it's written and format a file after an edit, are free and MIT-licensed on GitHub: <a href="https://github.com/izzrlabs/claude-code-java-hooks" target="_blank" rel="noopener">github.com/izzrlabs/claude-code-java-hooks</a>. The Claude Code kit builds on these same three hooks with 3 subagents, 3 skills, 6 slash commands, 5 CLAUDE.md templates, a full multi-module example, and a 7-part guide &mdash; <a href="https://izzrlabs.gumroad.com/l/weloxy" target="_blank" rel="noopener">see it on Gumroad</a>.</p>
 
         <p class="author">Israel Duarte, Java engineer &mdash; I write code first and claims second: every rule in this post came from a script that actually runs, not a slide. See what else I've <a href="../products.html">built</a>.</p>
+
+        <aside class="newsletter" aria-labelledby="newsletter-title">
+          <h2 id="newsletter-title">Get new posts by email</h2>
+          <p>One short email when a new post goes up: the title, a one-line summary and the link. Unsubscribe in one click.</p>
+          <form class="newsletter__form" action="https://buttondown.com/api/emails/embed-subscribe/israeltduarte" method="post">
+            <label for="newsletter-email">Your email</label>
+            <div class="newsletter__row">
+              <input type="email" id="newsletter-email" name="email" required autocomplete="email">
+              <button class="btn btn--primary" type="submit">Subscribe</button>
+            </div>
+          </form>
+          <p class="newsletter__note muted">Your email is kept by Buttondown, our newsletter service, and used only for these emails. <a href="../privacy.html">Privacy</a>.</p>
+        </aside>
 
         <p><a href="index.html">Back to Blog</a></p>
       </div>

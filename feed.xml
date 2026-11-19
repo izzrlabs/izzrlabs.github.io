@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>IZZR Labs blog</title>
+    <link>https://izzrlabs.github.io/blog/</link>
+    <atom:link href="https://izzrlabs.github.io/feed.xml" rel="self" type="application/rss+xml"/>
+    <description>Short, practical write-ups on Java, Spring Boot, and using Claude Code on real codebases.</description>
+    <language>en</language>
+    <item>
+      <title>Stop Claude Code from finishing with a red build</title>
+      <link>https://izzrlabs.github.io/blog/stop-claude-code-red-build.html</link>
+      <guid>https://izzrlabs.github.io/blog/stop-claude-code-red-build.html</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 +0000</pubDate>
+      <description>A Stop hook that blocks Claude Code from ending a turn while the build is red.</description>
+    </item>
+    <item>
+      <title>7 Spring Boot 4 interview questions, answered short</title>
+      <link>https://izzrlabs.github.io/blog/spring-boot-4-interview-questions.html</link>
+      <guid>https://izzrlabs.github.io/blog/spring-boot-4-interview-questions.html</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 +0000</pubDate>
+      <description>Short answers and follow-ups for the real jump from Boot 3 to Boot 4.</description>
+    </item>
+  </channel>
+</rss>

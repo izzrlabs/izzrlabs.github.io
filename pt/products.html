@@ -93,13 +93,13 @@
             <!-- red part: real lines from hooks-repo/README.md, section (b) (command shortened, middle stack-trace lines left out); green part: real lines from `mvn test` on the same example project (see Home); "#" lines are narration -->
             <figure class="terminal terminal--compact">
               <figcaption class="terminal__title">claude ~ example <span class="visually-hidden">&mdash; O hook de Stop deste kit, no projeto de exemplo grátis</span></figcaption>
-              <pre class="terminal__log" data-retype># O Claude edita o GreetingController ("Hello, " -&gt; "Hi, ") e tenta encerrar a vez
+              <pre class="terminal__log" data-retype># O Claude edita o GreetingController ("Hello, " -&gt; "Hi, ") e tenta encerrar o turno
 $ .claude/hooks/require-green-build.sh
 require-green-build.sh: `mvn -q test` failed (attempt 1 of 3, stop_hook_active=false). Last 20 lines:
 <span class="terminal__err">[ERROR]   GreetingControllerTest.defaultsToWorld:22 JSON path "$.message" expected:&lt;Hello, world&gt; but was:&lt;Hi, world&gt;</span>
 <span class="terminal__err">[ERROR] Tests run: 2, Failures: 2, Errors: 0, Skipped: 0</span>
 $ echo $?
-<span class="terminal__err">2</span>  # vez bloqueada: o Claude tem que consertar
+<span class="terminal__err">2</span>  # turno bloqueado: o Claude tem que consertar
 # O Claude volta pra "Hello, " e tenta de novo
 $ mvn test
 [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
