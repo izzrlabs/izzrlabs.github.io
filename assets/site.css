@@ -1,0 +1,604 @@
+/*
+  IZZR Labs — site stylesheet.
+  Mobile-first, no preprocessor, no framework. One file, loaded by every page.
+  Layout: 1 column by default; a single media query at 641px turns .grid--2
+  into two columns and bumps up the h1 size. No horizontal scroll at 360px.
+*/
+
+/* ---------- Fonts (self-hosted, no external request) ---------- */
+@font-face {
+  font-family: "Lora";
+  src: url("fonts/lora-var.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src: url("fonts/lora-italic-var.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ---------- Design tokens ---------- */
+:root {
+  --bg: #0f0f0e;
+  --surface: #1a1a18;
+  --border: #2e2e2a;
+  --fg: #f5f5f0;
+  --fg-muted: #b8b8ad;
+  --accent: #f59e0b;
+  --accent-kit: #6db33f;
+  --focus: #f59e0b;
+  --maxw: 1080px;
+  --prose: 68ch;
+  --radius: 10px;
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-5: 3rem;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-serif: "Lora", Georgia, "Iowan Old Style", ui-serif, serif;
+}
+
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+figure,
+blockquote {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+ul,
+ol {
+  padding-left: 1.25rem;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+code,
+pre,
+kbd {
+  font-family: var(--font-mono);
+}
+
+pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-2);
+  overflow-x: auto;
+}
+
+code {
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Keep long links/words from forcing horizontal scroll */
+a,
+p,
+li {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ---------- Focus ---------- */
+a:focus,
+button:focus,
+input:focus,
+textarea:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---------- Layout helpers ---------- */
+.container {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--space-3);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0;
+  top: -100%;
+  background: var(--accent);
+  color: #0f0f0e;
+  padding: var(--space-1) var(--space-2);
+  z-index: 100;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ---------- Header ---------- */
+.site-header {
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header .container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+}
+
+.site-logo {
+  font-weight: 700;
+  font-size: 1.125rem;
+  text-decoration: none;
+  color: var(--fg);
+  letter-spacing: 0.02em;
+}
+
+.site-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.site-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--fg-muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.site-nav a:hover {
+  color: var(--fg);
+}
+
+.site-nav a[aria-current="page"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ---------- Hero / sections ---------- */
+.hero {
+  padding: var(--space-5) 0 var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.hero h1 {
+  font-size: 1.75rem;
+  line-height: 1.25;
+}
+
+.section {
+  padding: var(--space-5) 0;
+}
+
+.section + .section {
+  border-top: 1px solid var(--border);
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+}
+
+h1,
+h2,
+.card__title {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: 1.625rem;
+}
+
+h2 {
+  font-size: 1.3rem;
+  margin-bottom: var(--space-2);
+}
+
+h3 {
+  font-size: 1.1rem;
+}
+
+.muted {
+  color: var(--fg-muted);
+}
+
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.15em 0.65em;
+}
+
+.prose {
+  max-width: var(--prose);
+}
+
+.prose p + p,
+.prose p + h2,
+.prose p + h3,
+.prose ul + p,
+.prose p + ul,
+.prose pre + p,
+.prose p + pre {
+  margin-top: var(--space-3);
+}
+
+/* ---------- Grid ---------- */
+.grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+/* ---------- Card ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.card__title {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.card--kit {
+  border-color: var(--accent-kit);
+}
+
+.card--kit .tag {
+  border-color: var(--accent-kit);
+  color: var(--accent-kit);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1px solid var(--border);
+}
+
+.btn--primary {
+  background: var(--accent);
+  color: #0f0f0e;
+  border-color: var(--accent);
+}
+
+.btn--primary:hover {
+  background: #e08c00;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--fg);
+}
+
+.btn--ghost:hover {
+  border-color: var(--fg-muted);
+}
+
+/* ---------- Forms ---------- */
+label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--fg-muted);
+  margin-bottom: 0.35rem;
+}
+
+input,
+textarea {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--fg);
+  font: inherit;
+  padding: 0.6rem 0.75rem;
+  min-height: 44px;
+}
+
+textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.form-field {
+  margin-bottom: var(--space-3);
+}
+
+/* ---------- Terminal (Home hero, ch.2) ---------- */
+.terminal {
+  margin: var(--space-4) 0 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.terminal__title {
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--fg-muted);
+}
+
+/* 9 lines of log at ~0.85rem / line-height 1.6, plus the pre's own
+   padding (--space-2 top and bottom): reserved up front so the retype
+   animation in terminal.js never shifts the page (no CLS). */
+.terminal__log {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+  min-height: 15rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.terminal__ok {
+  color: var(--accent-kit);
+  font-weight: 600;
+}
+
+/* ---------- Honeypot (contact form, ch.2) ---------- */
+.form-honeypot {
+  display: none;
+}
+
+/* ---------- Post list (blog) ---------- */
+.post-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.post-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+}
+
+.post-item h2,
+.post-item h3 {
+  margin-bottom: var(--space-1);
+}
+
+.post-item a {
+  text-decoration: none;
+}
+
+.post-item a:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Footer ---------- */
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: var(--space-4) 0;
+}
+
+.site-footer .container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links a {
+  color: var(--fg-muted);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.footer-links a:hover {
+  color: var(--fg);
+}
+
+/* ---------- Product cover + "what this is not" (products.html, ch.3) ---------- */
+.card__cover {
+  border-radius: calc(var(--radius) - 4px);
+}
+
+.card__not {
+  color: var(--fg-muted);
+  font-size: 0.9rem;
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-2);
+}
+
+/* ---------- Blog post meta & author (ch.4) ---------- */
+.post-meta {
+  color: var(--fg-muted);
+  font-size: 0.9rem;
+  font-family: var(--font-mono);
+}
+
+.author {
+  color: var(--fg-muted);
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+/* ---------- Responsive breakpoint ---------- */
+@media (min-width: 641px) {
+  .grid--2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero h1 {
+    font-size: 2.25rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+}
+
+/* ---------- Language switch (EN / PT / ES header nav, ch.6) ---------- */
+.lang-switch ul {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lang-switch li {
+  display: inline-flex;
+  align-items: center;
+}
+
+.lang-switch li + li::before {
+  content: "\00b7";
+  display: inline-block;
+  margin: 0 0.5em;
+  color: var(--fg-muted);
+  font-weight: 400;
+}
+
+.lang-switch a,
+.lang-switch span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--fg-muted);
+}
+
+.lang-switch a {
+  text-decoration: none;
+}
+
+.lang-switch a:hover {
+  color: var(--fg);
+}
+
+.lang-switch [aria-current="true"] {
+  color: var(--accent);
+}
+
+/* Only on wider screens: push the language switch to the far right of the
+   header, after the main nav. Below 641px it has no auto margin, so it
+   simply wraps onto its own line like the rest of .site-header .container. */
+@media (min-width: 641px) {
+  .lang-switch {
+    margin-left: auto;
+  }
+}

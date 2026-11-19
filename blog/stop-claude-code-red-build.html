@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stop Claude Code from finishing with a red build — IZZR Labs</title>
+  <meta name="description" content="A Stop hook that blocks Claude Code from ending a turn on a red build, with the marker that keeps it from running on sessions that never touched code.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="IZZR Labs">
+  <meta property="og:title" content="Stop Claude Code from finishing with a red build">
+  <meta property="og:description" content="A Stop hook that blocks Claude Code from ending a turn on a red build, with the marker that keeps it from running on sessions that never touched code.">
+  <meta property="og:url" content="https://izzrlabs.github.io/blog/stop-claude-code-red-build.html">
+  <meta property="og:image" content="https://izzrlabs.github.io/assets/img/izzrlabs-logo.png">
+  <meta property="og:image:alt" content="IZZR Labs logo: a black flask icon with the letters IZ, on an orange background">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://izzrlabs.github.io/blog/stop-claude-code-red-build.html">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="site-logo" href="../index.html">IZZR Labs</a>
+      <nav class="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="../products.html">Products</a></li>
+          <li><a href="index.html" aria-current="page">Blog</a></li>
+          <li><a href="../about.html">About</a></li>
+          <li><a href="../contact.html">Contact</a></li>
+        </ul>
+      </nav>
+      <nav class="lang-switch" aria-label="Language">
+        <ul>
+          <li><span aria-current="true">EN</span></li>
+          <li><a href="../pt/index.html" lang="pt-BR" hreflang="pt-BR">PT</a></li>
+          <li><a href="../es/index.html" lang="es" hreflang="es">ES</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="section">
+      <div class="container prose">
+        <h1>Stop Claude Code from finishing with a red build</h1>
+        <p class="post-meta"><time datetime="2026-11-18">November 18, 2026</time> &middot; 5 min read</p>
+
+        <h2>The problem</h2>
+        <p>Claude Code finishes a turn, tells you the feature is done, and the build is red. Nothing in that turn checked it. You find out one of two ways: a few minutes later when CI fails on the pull request, or twenty minutes later when you run the test suite yourself before you push, out of habit, not because Claude asked you to.</p>
+        <p>It's not that Claude is careless. It edited files, maybe ran one test it picked on its own, decided the task looked finished, and handed control back to you. Nothing in that loop required the whole suite to pass before the turn could end. A hook can require it instead.</p>
+
+        <h2>Why not on PostToolUse</h2>
+        <p>A build hook wired to <code>PostToolUse</code> runs after every single edit: every method you add, every import you fix, every typo you correct. On a real codebase that means running a Maven build dozens of times during one refactor, most of them on code that isn't finished yet and isn't supposed to compile cleanly mid-edit. That's slow, and it tells you nothing you didn't already expect.</p>
+        <p>The event you want is <code>Stop</code>. It fires once at the end of a turn, when Claude finishes responding on its own &mdash; after every edit for that turn is already done, not after each one on its own. Two edge cases to know: it doesn't fire if the user interrupts instead of Claude finishing by itself, and it fires again, with <code>stop_hook_active</code> set, if an earlier <code>Stop</code> hook already blocked once this same turn &mdash; the script below depends on exactly that second case.</p>
+
+        <h2>Where it goes in settings.json</h2>
+        <pre><code>{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/require-green-build.sh",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+        <p>Two details are worth calling out. The double quotes around <code>${CLAUDE_PROJECT_DIR}</code> matter: without them, a project directory with a space in its path breaks the command before the hook ever runs. And <code>Stop</code> takes no <code>matcher</code> at all. Unlike <code>PreToolUse</code> or <code>PostToolUse</code>, which filter by tool name, <code>Stop</code> fires on every turn, full stop, with nothing to narrow it down.</p>
+
+        <h2>The hook, in full</h2>
+        <p>Here's the full script, copy-paste ready. It checks for a build marker, reads whether the current <code>Stop</code> event is already a repeat of a blocked one, runs the build, and either lets the turn end or blocks it with the log attached.</p>
+        <pre><code>#!/bin/bash
+# Stop hook (see settings.json; the Stop event takes no matcher -- it fires once per
+# turn, right before Claude is about to hand control back to you).
+#
+# The problem this avoids: a build hook on PostToolUse re-runs the build after every
+# single file edit, which is slow and useless in the middle of a refactor. This script
+# runs on Stop instead -- once per turn -- and only when the PostToolUse companion hook
+# (format-on-edit.sh) has already marked something build-relevant as changed. Edit only
+# a .md file during the turn, and that marker never gets created, so the turn ends with
+# no build at all. That's the point, not a bug.
+#
+# BUILD_CMD: the default below is the fast loop (`mvn -q test`). In a multi-module repo,
+# scope it to the module you're actually working in, for example:
+#   BUILD_CMD="mvn -q test -pl your-module -am"
+# `-pl your-module` tells Maven to build only that module; `-am` ("also make") builds
+# whatever that module depends on first, so the scoped build still has everything it
+# needs to compile and run.
+# A Gradle project would use `gradle check` here instead -- cited as the equivalent,
+# not tested: the project this hook was written against is Maven.
+set -euo pipefail
+
+BUILD_CMD="mvn -q test"
+MAX_CONSECUTIVE_FAILURES=3
+
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
+MARKER="$PROJECT_DIR/.claude/.build-pending"
+
+if [ ! -f "$MARKER" ]; then
+  exit 0  # nothing build-relevant changed this turn -- nothing to prove, let Claude stop
+fi
+
+INPUT="$(cat)"
+STOP_HOOK_ACTIVE="$(python3 - "$INPUT" <<'PYEOF'
+import json, sys
+try:
+    payload = json.loads(sys.argv[1])
+except (IndexError, ValueError):
+    print("false")
+    sys.exit(0)
+print(str(payload.get("stop_hook_active", False)).lower())
+PYEOF
+)"
+
+FAILURES="$(cat "$MARKER" 2>/dev/null || echo 0)"
+case "$FAILURES" in ''|*[!0-9]*) FAILURES=0 ;; esac
+
+if [ "$FAILURES" -ge "$MAX_CONSECUTIVE_FAILURES" ]; then
+  echo "require-green-build.sh: build still red after $FAILURES attempts in a row," \
+       "giving up instead of looping forever (stop_hook_active=$STOP_HOOK_ACTIVE)." >&2
+  rm -f "$MARKER"
+  exit 0  # let Claude stop anyway -- a human needs to look at this, not another retry
+fi
+
+cd "$PROJECT_DIR"
+BUILD_LOG="$(mktemp)"
+if $BUILD_CMD >"$BUILD_LOG" 2>&1; then
+  rm -f "$MARKER" "$BUILD_LOG"
+  exit 0  # green: the marker is cleared, Claude may stop
+fi
+
+FAILURES=$((FAILURES + 1))
+echo "$FAILURES" > "$MARKER"
+
+{
+  echo "require-green-build.sh: \`$BUILD_CMD\` failed (attempt $FAILURES of $MAX_CONSECUTIVE_FAILURES, stop_hook_active=$STOP_HOOK_ACTIVE). Last 20 lines:"
+  tail -n 20 "$BUILD_LOG"
+} >&2
+rm -f "$BUILD_LOG"
+exit 2  # blocks the Stop: Claude sees this stderr and keeps working instead of stopping</code></pre>
+
+        <h2>What a red build looks like</h2>
+        <p>When the build fails, the script exits 2 and writes its message to stderr. Claude Code treats that combination as a block: the turn doesn't end, and Claude sees the stderr text as part of what it reads next, log included. Exit 0 does the opposite &mdash; either nothing needed building, or the build came back green, and the turn is free to end as normal.</p>
+        <p><code>MAX_CONSECUTIVE_FAILURES</code> set to 3 exists so a genuinely broken build doesn't trap Claude in a retry loop forever. After the third failed build in a row, the next <code>Stop</code> event gives up without running the build again, on the idea that a human should look at it instead of a fourth automatic attempt. <code>stop_hook_active</code>, read out of the JSON Claude Code sends on standard input, tells the script whether this particular <code>Stop</code> event is already the result of an earlier block. It only shapes the message here, not the decision to run the build.</p>
+        <p>What you'll actually see on a failed attempt is one line on stderr, followed by whatever sits at the tail of the build log:</p>
+        <pre><code>require-green-build.sh: `mvn -q test` failed (attempt 1 of 3, stop_hook_active=false). Last 20 lines:</code></pre>
+        <p>&mdash; followed, in your own terminal, by the real last 20 lines of that failed <code>mvn -q test</code> run. That part isn't reproduced here, since what shows up depends entirely on your own broken test, not on this script.</p>
+
+        <h2>The gotcha that makes this hook worth installing</h2>
+        <p>Install only this one script, and you get a hook that stays silent forever. It only runs the build if a marker file, <code>.claude/.build-pending</code>, already exists, and nothing inside this script ever creates that marker. That job belongs to a companion <code>PostToolUse</code> hook, which watches every file Claude edits and creates the marker when the file is one that can actually turn a build red: a <code>.java</code> source file, any <code>pom.xml</code>, a Flyway <code>.sql</code> migration, or an <code>application*.{yml,yaml,properties}</code> config file. One detail matters here: that companion hook only creates the marker if it doesn't already exist (<code>[ -f "$MARKER" ] || echo 0 &gt; "$MARKER"</code>) &mdash; it never overwrites one that's already there. Write your own version with a plain <code>touch</code> or an unconditional <code>echo &gt; "$MARKER"</code> on every matching edit, and you reset the failure count back to zero each time, so the 3-strikes guard above never gets a chance to fire and a truly broken build blocks forever instead of giving up after three tries.</p>
+        <p>That split is deliberate, not an accident. A session where Claude only touched a README or a design document never creates the marker, so the <code>Stop</code> hook exits on its very first check and the turn ends with no build at all &mdash; instantly, with no multi-minute test tax for a typo fix in a Markdown file. That's the entire point of the marker, not a gap waiting to be patched later.</p>
+
+        <h2>Limitations</h2>
+        <ul>
+          <li><strong>Time.</strong> A slow suite can blow past the 5-minute <code>timeout</code> set on the hook. Scope the command to the module you're touching with the Maven flags shown above, or swap in a faster <code>BUILD_CMD</code> entirely.</li>
+          <li><strong>Monorepo.</strong> This is one command tied to one <code>CLAUDE_PROJECT_DIR</code>, not something that walks every module in a repository one by one looking for the one that changed.</li>
+          <li><strong>Gradle.</strong> A Gradle project would use <code>gradle check</code> here instead &mdash; cited as the equivalent, not tested, because the project this hook was written against runs on Maven.</li>
+          <li><strong>Requirements.</strong> The script needs <code>bash</code> and <code>python3</code> on the machine running Claude Code. On Windows that means WSL or Git Bash, not a native command prompt.</li>
+        </ul>
+
+        <h2>Get the hooks</h2>
+        <p>This hook, and two others that block an obvious secret before it's written and format a file after an edit, are free and MIT-licensed on GitHub: <a href="https://github.com/izzrlabs/claude-code-java-hooks" target="_blank" rel="noopener">github.com/izzrlabs/claude-code-java-hooks</a>. The Claude Code kit builds on these same three hooks with 3 subagents, 3 skills, 6 slash commands, 5 CLAUDE.md templates, a full multi-module example, and a 7-part guide &mdash; <a href="https://izzrlabs.gumroad.com/l/weloxy" target="_blank" rel="noopener">see it on Gumroad</a>.</p>
+
+        <p class="author">Israel Duarte, Java engineer &mdash; I write code first and claims second: every rule in this post came from a script that actually runs, not a slide. See what else I've <a href="../products.html">built</a>.</p>
+
+        <p><a href="index.html">Back to Blog</a></p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 IZZR Labs</p>
+      <ul class="footer-links">
+        <li><a href="../privacy.html">Privacy</a></li>
+        <li><a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">Gumroad store</a></li>
+        <li><a href="https://github.com/izzrlabs" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

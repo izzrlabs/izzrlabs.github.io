@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Products — IZZR Labs</title>
+  <meta name="description" content="The Modern Java &amp; Spring Boot Interview Guide and the Claude Code Kit for Java &amp; Spring Boot: what's inside, what each one is not, and the free alternative to each.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="IZZR Labs">
+  <meta property="og:title" content="Products — IZZR Labs">
+  <meta property="og:description" content="The Modern Java &amp; Spring Boot Interview Guide and the Claude Code Kit for Java &amp; Spring Boot: what's inside, what each one is not, and the free alternative to each.">
+  <meta property="og:url" content="https://izzrlabs.github.io/products.html">
+  <meta property="og:image" content="https://izzrlabs.github.io/assets/img/izzrlabs-logo.png">
+  <meta property="og:image:alt" content="IZZR Labs logo: a black flask icon with the letters IZ, on an orange background">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://izzrlabs.github.io/products.html">
+  <link rel="alternate" hreflang="en" href="https://izzrlabs.github.io/products.html">
+  <link rel="alternate" hreflang="pt-BR" href="https://izzrlabs.github.io/pt/products.html">
+  <link rel="alternate" hreflang="es" href="https://izzrlabs.github.io/es/products.html">
+  <link rel="alternate" hreflang="x-default" href="https://izzrlabs.github.io/products.html">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="site-logo" href="index.html">IZZR Labs</a>
+      <nav class="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="products.html" aria-current="page">Products</a></li>
+          <li><a href="blog/index.html">Blog</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+      <nav class="lang-switch" aria-label="Language">
+        <ul>
+          <li><span aria-current="true">EN</span></li>
+          <li><a href="pt/products.html" lang="pt-BR" hreflang="pt-BR">PT</a></li>
+          <li><a href="es/products.html" lang="es" hreflang="es">ES</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="container">
+        <h1>Products</h1>
+        <p>IZZR Labs builds digital products for Java and Spring Boot developers. Both products follow the same rule: if a claim can be tested, there's code behind it that runs, not just a sentence.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="grid grid--2">
+          <article class="card">
+            <img class="card__cover" src="assets/img/cover-java-guide.png" alt="Cover of the Modern Java &amp; Spring Boot Interview Guide: dark background, orange title text" width="1280" height="720">
+            <p class="tag">Guide &middot; one-time</p>
+            <h2 class="card__title">Modern Java &amp; Spring Boot Interview Guide</h2>
+            <ul>
+              <li>About 120 interview questions across 10 chapters &mdash; each with a 30-second answer, a deep dive, and 2&ndash;4 follow-up questions already answered.</li>
+              <li>A Maven multi-module repository (one module per chapter) with JUnit 5 tests that pass on <code>mvn test</code> &mdash; the claims marked as tested in the text have a test behind them.</li>
+              <li>Baseline Java 21 LTS and Spring Boot 4.0 (Spring Framework 7), with notes on what changed up to Java 25 LTS and "coming from Boot 3.x" notes in the Spring chapters.</li>
+            </ul>
+            <p class="card__not">What this is not: Markdown files, not a bundled PDF; no video, no subscription. It runs without Docker &mdash; just JDK 21 and Maven (the JPA and testing proofs use an in-memory H2 database).</p>
+            <a class="btn btn--primary" href="https://izzrlabs.gumroad.com/l/kxtubc" target="_blank" rel="noopener">Get it on Gumroad</a>
+            <a class="btn btn--ghost" href="https://izzrlabs.gumroad.com/l/efvbc" target="_blank" rel="noopener">Read chapter 1 free</a>
+            <p class="muted">Refund if the content doesn't match this description &mdash; a missing chapter, or code that doesn't run as described. Ask through Gumroad; this isn't a "changed my mind" guarantee.</p>
+          </article>
+
+          <article class="card card--kit">
+            <img class="card__cover" src="assets/img/cover-claude-kit.png" alt="Cover of the Claude Code Kit for Java &amp; Spring Boot: dark background, green accent on a folder icon" width="1280" height="720" loading="lazy" decoding="async">
+            <p class="tag">Kit &middot; one-time</p>
+            <h2 class="card__title">Claude Code Kit for Java &amp; Spring Boot</h2>
+            <ul>
+              <li>A <code>.claude/</code> folder: 3 subagents (<code>java-reviewer</code>, <code>test-writer</code>, <code>migration</code>), 3 skills (<code>jpa-flyway</code>, <code>testcontainers-testing</code>, <code>boot-3-to-4-upgrade</code>), 6 slash commands and 3 hooks wired into <code>settings.json</code>.</li>
+              <li>5 CLAUDE.md templates plus a "how to adapt" guide: monolith, microservice, Spring Modulith, multi-module Maven monorepo, and legacy Java 8/11 &rarr; 21.</li>
+              <li>A full example multi-module Spring Boot project (Java 21, Spring Boot 4.1.2, Flyway, 18 passing tests) and a 7-part Markdown guide &mdash; the kit was tested against that project before it shipped.</li>
+            </ul>
+            <p class="card__not">What this is not: it does not include Claude Code itself (you need your own subscription and CLI). Markdown, not a PDF and not a video course, with no bundled future updates and no 1:1 support.</p>
+            <a class="btn btn--primary" href="https://izzrlabs.gumroad.com/l/weloxy" target="_blank" rel="noopener">Get it on Gumroad</a>
+            <p class="muted">The 3 hooks in this kit are free on GitHub &mdash; see the Free section below.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <h2>Free</h2>
+        <div class="grid grid--2">
+          <article class="card">
+            <h3 class="card__title">Chapter 1 of the guide, free</h3>
+            <p>Read the first chapter of the Interview Guide before buying, no account needed.</p>
+            <a class="btn btn--ghost" href="https://izzrlabs.gumroad.com/l/efvbc" target="_blank" rel="noopener">Read chapter 1 free</a>
+          </article>
+          <article class="card">
+            <h3 class="card__title">The hooks repository</h3>
+            <p>The 3 Claude Code hooks from the kit &mdash; block an obvious secret before it's written, format the file after an edit, and stop a turn from ending on a red build &mdash; free on GitHub under the MIT license.</p>
+            <a class="btn btn--ghost" href="https://github.com/izzrlabs/claude-code-java-hooks" target="_blank" rel="noopener">View on GitHub</a>
+          </article>
+        </div>
+        <p class="muted">The kit itself has no free sample. The hooks repository above is its free path.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <p class="muted">Each "Get it on Gumroad" button opens that product's page on Gumroad in a new tab. The purchase and payment happen there.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 IZZR Labs</p>
+      <ul class="footer-links">
+        <li><a href="privacy.html">Privacy</a></li>
+        <li><a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">Gumroad store</a></li>
+        <li><a href="https://github.com/izzrlabs" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

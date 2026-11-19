@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contacto — IZZR Labs</title>
+  <meta name="description" content="Envía un mensaje a IZZR Labs con un formulario de contacto corto. No se necesita dirección de correo.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="IZZR Labs">
+  <meta property="og:title" content="Contacto — IZZR Labs">
+  <meta property="og:description" content="Envía un mensaje a IZZR Labs con un formulario de contacto corto. No se necesita dirección de correo.">
+  <meta property="og:url" content="https://izzrlabs.github.io/es/contact.html">
+  <meta property="og:image" content="https://izzrlabs.github.io/assets/img/izzrlabs-logo.png">
+  <meta property="og:image:alt" content="Logo de IZZR Labs: un ícono de frasco negro con las letras IZ, sobre fondo naranja">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://izzrlabs.github.io/es/contact.html">
+  <link rel="alternate" hreflang="en" href="https://izzrlabs.github.io/contact.html">
+  <link rel="alternate" hreflang="pt-BR" href="https://izzrlabs.github.io/pt/contact.html">
+  <link rel="alternate" hreflang="es" href="https://izzrlabs.github.io/es/contact.html">
+  <link rel="alternate" hreflang="x-default" href="https://izzrlabs.github.io/contact.html">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="site-logo" href="index.html">IZZR Labs</a>
+      <nav class="site-nav" aria-label="Principal">
+        <ul>
+          <li><a href="index.html">Inicio</a></li>
+          <li><a href="products.html">Productos</a></li>
+          <li><a href="blog/index.html">Blog</a></li>
+          <li><a href="about.html">Acerca de</a></li>
+          <li><a href="contact.html" aria-current="page">Contacto</a></li>
+        </ul>
+      </nav>
+      <nav class="lang-switch" aria-label="Idioma">
+        <ul>
+          <li><a href="../contact.html" lang="en" hreflang="en">EN</a></li>
+          <li><a href="../pt/contact.html" lang="pt-BR" hreflang="pt-BR">PT</a></li>
+          <li><span aria-current="true">ES</span></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="container prose">
+        <h1>Contacto</h1>
+        <p>¿Tienes una pregunta sobre un producto, encontraste un error, o solo quieres saludar? Envía un mensaje abajo &mdash; llega a IZZR Labs a través de Formspree, y el envío te lleva a una página corta de agradecimiento. La respuesta llega en inglés.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container prose">
+        <!-- Formspree form (IZZR Labs site contact), set 2026-11-18. -->
+        <form class="form" action="https://formspree.io/f/xoedwbjy" method="POST">
+          <div class="form-field">
+            <label for="name">Nombre</label>
+            <input id="name" name="name" type="text" required>
+          </div>
+          <div class="form-field">
+            <label for="email">Correo</label>
+            <input id="email" name="email" type="email" required autocomplete="email">
+          </div>
+          <div class="form-field">
+            <label for="message">Mensaje</label>
+            <textarea id="message" name="message" rows="6" required></textarea>
+          </div>
+          <input type="hidden" name="_subject" value="IZZR Labs contact (ES)">
+          <input type="hidden" name="_next" value="https://izzrlabs.github.io/es/thanks.html">
+          <p class="form-honeypot">
+            <label for="_gotcha">Deja este campo vacío</label>
+            <input id="_gotcha" name="_gotcha" type="text" tabindex="-1" autocomplete="off">
+          </p>
+          <button class="btn btn--primary" type="submit">Enviar mensaje</button>
+        </form>
+
+        <h2>Otras formas de contactarme</h2>
+        <p>¿Ya compraste algo? El soporte de producto es a través de Gumroad &mdash; escríbeme desde tu compra ahí y lo veré. También puedes ver la <a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">tienda en Gumroad</a> o la cuenta de <a href="https://github.com/izzrlabs" target="_blank" rel="noopener">GitHub</a>.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 IZZR Labs</p>
+      <ul class="footer-links">
+        <li><a href="privacy.html">Privacidad</a></li>
+        <li><a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">Tienda en Gumroad</a></li>
+        <li><a href="https://github.com/izzrlabs" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>7 Spring Boot 4 interview questions, answered short — IZZR Labs</title>
+  <meta name="description" content="Seven Spring Boot 4 interview questions on the Boot 3 to 4 jump, each with a short answer and the follow-up that separates a memorized answer from a real one.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="IZZR Labs">
+  <meta property="og:title" content="7 Spring Boot 4 interview questions, answered short">
+  <meta property="og:description" content="Seven Spring Boot 4 interview questions on the Boot 3 to 4 jump, each with a short answer and the follow-up that separates a memorized answer from a real one.">
+  <meta property="og:url" content="https://izzrlabs.github.io/blog/spring-boot-4-interview-questions.html">
+  <meta property="og:image" content="https://izzrlabs.github.io/assets/img/izzrlabs-logo.png">
+  <meta property="og:image:alt" content="IZZR Labs logo: a black flask icon with the letters IZ, on an orange background">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://izzrlabs.github.io/blog/spring-boot-4-interview-questions.html">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="site-logo" href="../index.html">IZZR Labs</a>
+      <nav class="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="../products.html">Products</a></li>
+          <li><a href="index.html" aria-current="page">Blog</a></li>
+          <li><a href="../about.html">About</a></li>
+          <li><a href="../contact.html">Contact</a></li>
+        </ul>
+      </nav>
+      <nav class="lang-switch" aria-label="Language">
+        <ul>
+          <li><span aria-current="true">EN</span></li>
+          <li><a href="../pt/index.html" lang="pt-BR" hreflang="pt-BR">PT</a></li>
+          <li><a href="../es/index.html" lang="es" hreflang="es">ES</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="section">
+      <div class="container prose">
+        <h1>7 Spring Boot 4 interview questions, answered short</h1>
+        <p class="post-meta"><time datetime="2026-11-18">November 18, 2026</time> &middot; 5 min read</p>
+
+        <p>Seven questions an interviewer could actually ask about the jump to Spring Boot 4, each with a short answer and the one follow-up that separates a memorized answer from a real one.</p>
+
+        <h2>What's the minimum Java version for Spring Boot 4, and what would you actually run?</h2>
+        <p>Spring Boot 4 compiles and runs down to Java 17. That's the floor, not a recommendation. Underneath it, Spring Framework 7 and Jakarta EE 11 also accept 17 as their own minimum. In practice I'd run 21 or 25, both long-term-support releases, because those are the versions still getting security patches years out, not because the framework demands it. The Java 21 baseline IZZR Labs picked for its own products is a separate choice from what Spring Boot 4 will technically accept.</p>
+        <p><strong>What the interviewer is checking:</strong> whether you confuse minimum supported with recommended, and whether you can tell a framework constraint apart from a project's own baseline decision.</p>
+
+        <h2>My imports are <code>com.fasterxml.jackson.*</code>. What breaks?</h2>
+        <p>Jackson 3 moves its group id and most of its packages over to <code>tools.jackson</code>, so a straightforward rename fixes anything under the old core or databind packages. The cut runs along the artifact line, not annotations versus everything else: <code>jackson-annotations</code> doesn't move at all, so things like <code>@JsonProperty</code> and <code>@JsonIgnore</code> stay right where they were, under <code>com.fasterxml.jackson.annotation</code>. The annotations that actually live in <code>jackson-databind</code> &mdash; <code>@JsonSerialize</code>, <code>@JsonDeserialize</code>, <code>@JsonNaming</code>, <code>@JsonPOJOBuilder</code> &mdash; move with it, to <code>tools.jackson.databind.annotation</code>. The other shift is <code>ObjectMapper</code> giving ground to <code>JsonMapper</code>, built as an immutable object configured through a builder instead of mutated after construction.</p>
+        <p><strong>What the interviewer is checking:</strong> whether you know the split is by artifact &mdash; <code>jackson-annotations</code> versus <code>jackson-databind</code> &mdash; and not by "annotations versus the rest." Get that wrong and code that compiled yesterday throws import errors today.</p>
+
+        <h2>My build warns that <code>spring-boot-starter-web</code> is deprecated. What changed?</h2>
+        <p>It's not a stale local repository cache. The starter itself still resolves, it's just deprecated in favor of more specific modules: a dedicated <code>-webmvc</code> starter in place of the old general-purpose web starter, a separate <code>-aspectj</code> starter, a separate <code>-jackson</code> starter, and a <code>security-</code> prefix added to the OAuth2 starters. The old "classic" names still resolve for now, as a bridge while a project migrates, but they're not where the ecosystem is heading.</p>
+        <p><strong>What the interviewer is checking:</strong> that you reach for the dependency rename before you start deleting local repository folders out of frustration.</p>
+
+        <h2><code>@MockBean</code> is gone. What replaces it?</h2>
+        <p><code>@MockitoBean</code> and <code>@MockitoSpyBean</code>, both of which now live in <code>spring-test</code> itself instead of a Spring Boot-specific package. They were already marked deprecated back in version 3.4, so removal in 4.0 shouldn't surprise anyone who read their build warnings. A junior answer stops at the new annotation name. A senior answer adds why the change is actually better: the new annotations run on a general-purpose bean-override SPI that lives in <code>spring-test</code> itself, the same mechanism behind <code>@TestBean</code>, instead of a Spring Boot-specific shortcut. That doesn't dodge the cost of a fresh <code>ApplicationContext</code> &mdash; every distinct combination of overridden beans still gets its own entry in the context cache, same as before &mdash; but it means the override mechanism works the same way whether or not Spring Boot is even on the classpath.</p>
+        <p><strong>What the interviewer is checking:</strong> whether you understand the design reasoning behind the change, not only the new name to type.</p>
+
+        <h2>How do you find the properties that moved?</h2>
+        <p>Add <code>spring-boot-properties-migrator</code> as a dependency, start the application, and read the startup log. It reports every deprecated or renamed property it finds, along with the key that replaced it. It's meant to be temporary: once the log goes quiet, the dependency comes back out of the <code>pom.xml</code>.</p>
+        <p><strong>What the interviewer is checking:</strong> whether you treat it as a diagnostic step, not something left wired permanently into a production build.</p>
+
+        <h2>What's the JUnit story in Boot 4?</h2>
+        <p>Dropping JUnit 4 and its Vintage engine from <code>spring-boot-starter-test</code> isn't a Boot 4 change &mdash; that already happened back in Spring Boot 2.4, so a project on 3.x is just as Jupiter-only as one on 4.0. What is new is on the JUnit side itself: Spring Boot 4.0 manages JUnit 6 (6.0.3 as of Boot 4.0.9), and JUnit 6 formally deprecates the Vintage engine, so test discovery reports an INFO-level discovery issue if it still finds a JUnit 4-style test class anywhere on the classpath &mdash; that's a note from test discovery, not a warning at application startup. Either way, code still written the old JUnit 4 way needs to migrate before the framework upgrade, not during it.</p>
+        <p><strong>What the interviewer is checking:</strong> this is deliberately the riskiest line in the whole list &mdash; whether you separate a years-old Spring Boot change from what's actually new in 4.0, and whether you can name the actual JUnit version Boot 4 ships instead of waving at "the current generation."</p>
+
+        <h2>Walk me through the upgrade order on a real service.</h2>
+        <p>Clear out every deprecation warning while the service is still on the previous feature release, since that version tells you what's coming without breaking anything yet. Then raise the Java version, add the properties migrator along with the classic starter names as a temporary bridge, and move to Jackson 3 and the new mock annotations one change at a time. Only once all of that has landed and proven itself do I swap the bridge starters for the modular ones and drop the migrator for good. Each of those steps is its own pull request, with a green suite at the end of it &mdash; never one pull request that changes everything at once.</p>
+        <p><strong>What the interviewer is checking:</strong> whether your default is a single big-bang pull request, or an order that keeps the service shippable after every single step.</p>
+
+        <h2>Keep going</h2>
+        <p>Start with <a href="https://izzrlabs.gumroad.com/l/efvbc" target="_blank" rel="noopener">chapter 1 of the Interview Guide, free</a>. The full guide covers about 120 questions across 10 chapters &mdash; <a href="https://izzrlabs.gumroad.com/l/kxtubc" target="_blank" rel="noopener">see it on Gumroad</a>.</p>
+
+        <p class="author">Israel Duarte, Java engineer &mdash; I write code first and claims second: every rule in this post came from a script that actually runs, not a slide. See what else I've <a href="../products.html">built</a>.</p>
+
+        <p><a href="index.html">Back to Blog</a></p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 IZZR Labs</p>
+      <ul class="footer-links">
+        <li><a href="../privacy.html">Privacy</a></li>
+        <li><a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">Gumroad store</a></li>
+        <li><a href="https://github.com/izzrlabs" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>
