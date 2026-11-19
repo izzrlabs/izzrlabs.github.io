@@ -314,6 +314,10 @@ h3 {
 
 /* ---------- Card ---------- */
 .card {
+  /* Grid items default to min-width: auto, so a long unbreakable line
+     (the kit card's terminal) would widen the column. 0 lets the pre
+     scroll inside the card instead. */
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -433,6 +437,128 @@ textarea {
 .terminal__ok {
   color: var(--accent-kit);
   font-weight: 600;
+}
+
+/* Red lines of a failing build (Products kit card). #f87171 on --surface
+   (#1a1a18) is ~6.6:1, AA for small text. */
+.terminal__err {
+  color: #f87171;
+}
+
+/* Kit card terminal: long lines wrap inside the card (the failure text
+   stays readable at any width); terminal.js reserves the full height while
+   it retypes, so nothing shifts. */
+.terminal--compact {
+  margin: 0;
+}
+
+.terminal--compact .terminal__log {
+  min-height: 0;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 404 stack trace: no animation, no reserved height; links keep the
+   terminal's monospace and get the accent color. */
+.terminal__log--trace {
+  min-height: 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.terminal__log--trace a {
+  color: var(--accent);
+}
+
+/* ---------- Flip card (Products guide card) ----------
+   No JS: question and answer stacked, button hidden.
+   With JS (.flip--js): both faces share one grid cell, so the card keeps
+   the height of the taller face and never shifts the page. */
+.flip {
+  margin: var(--space-2) 0;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.flip__label {
+  margin: 0 0 var(--space-1);
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+}
+
+.flip__q {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  line-height: 1.4;
+  margin: 0 0 var(--space-1);
+}
+
+.flip__back p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.flip__toggle {
+  display: none;
+}
+
+.flip--js .flip__inner {
+  display: grid;
+  perspective: 1200px;
+}
+
+.flip--js .flip__face {
+  grid-area: 1 / 1;
+  backface-visibility: hidden;
+  transition: transform 0.5s ease, visibility 0s linear 0.25s;
+}
+
+.flip--js .flip__back {
+  transform: rotateY(180deg);
+  visibility: hidden;
+}
+
+.flip--js.is-flipped .flip__front {
+  transform: rotateY(-180deg);
+  visibility: hidden;
+}
+
+.flip--js.is-flipped .flip__back {
+  transform: rotateY(0deg);
+  visibility: visible;
+}
+
+.flip--js .flip__toggle {
+  display: inline-block;
+  margin-top: var(--space-2);
+  padding: 0.4rem 0.8rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.flip__cta {
+  display: inline-block;
+  margin-top: var(--space-1);
+  color: var(--accent);
+}
+
+.flip--js .flip__toggle:hover {
+  border-color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flip--js .flip__face {
+    transition: none;
+  }
 }
 
 /* ---------- Honeypot (contact form, ch.2) ---------- */

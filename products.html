@@ -64,6 +64,15 @@
               <li>A Maven multi-module repository (one module per chapter) with JUnit 5 tests that pass on <code>mvn test</code> &mdash; the claims marked as tested in the text have a test behind them.</li>
               <li>Baseline Java 21 LTS and Spring Boot 4.0 (Spring Framework 7), with notes on what changed up to Java 25 LTS and "coming from Boot 3.x" notes in the Spring chapters.</li>
             </ul>
+            <!-- verbatim from the free chapter 1 (Q1.4, "Short answer (30 seconds)") -->
+            <div class="flip" data-label-show="Show the 30-second answer" data-label-hide="Back to the question">
+              <p class="flip__label">From chapter 1 (free), question 1.4</p>
+              <div class="flip__inner">
+                <div class="flip__face flip__front"><p class="flip__q" lang="en">What happens if you mutate an object after using it as a <code>HashMap</code> key?</p></div>
+                <div class="flip__face flip__back" id="q14-answer"><p lang="en">The entry becomes unreachable. The map stored it in the bin chosen by the <strong>old</strong> hash. After the mutation, <code>get(key)</code> computes the <strong>new</strong> hash and looks in a different bin, and looking up with an equal copy of the old value finds the bin but fails <code>equals</code>. The entry is still in the map: it counts in <code>size()</code>, shows up in iteration and in <code>containsValue</code>, but you can no longer <code>get</code> or <code>remove</code> it by key. In a long-lived map this is a memory leak.</p><a class="flip__cta" href="https://izzrlabs.gumroad.com/l/efvbc" target="_blank" rel="noopener">Read chapter 1 free</a></div>
+              </div>
+              <button type="button" class="flip__toggle" aria-expanded="false" aria-controls="q14-answer">Show the 30-second answer</button>
+            </div>
             <p class="card__not">What this is not: Markdown files, not a bundled PDF; no video, no subscription. It runs without Docker &mdash; just JDK 21 and Maven (the JPA and testing proofs use an in-memory H2 database).</p>
             <a class="btn btn--primary" href="https://izzrlabs.gumroad.com/l/kxtubc" target="_blank" rel="noopener">Get it on Gumroad</a>
             <a class="btn btn--ghost" href="https://izzrlabs.gumroad.com/l/efvbc" target="_blank" rel="noopener">Read chapter 1 free</a>
@@ -79,6 +88,21 @@
               <li>5 CLAUDE.md templates plus a "how to adapt" guide: monolith, microservice, Spring Modulith, multi-module Maven monorepo, and legacy Java 8/11 &rarr; 21.</li>
               <li>A full example multi-module Spring Boot project (Java 21, Spring Boot 4.1.2, Flyway, 18 passing tests) and a 7-part Markdown guide &mdash; the kit was tested against that project before it shipped.</li>
             </ul>
+            <!-- red part: real lines from hooks-repo/README.md, section (b) (command shortened, middle stack-trace lines left out); green part: real lines from `mvn test` on the same example project (see Home); "#" lines are narration -->
+            <figure class="terminal terminal--compact">
+              <figcaption class="terminal__title">claude ~ example <span class="visually-hidden">&mdash; The Stop hook from this kit, on the free example project</span></figcaption>
+              <pre class="terminal__log" data-retype># Claude edits GreetingController ("Hello, " -&gt; "Hi, ") and tries to end the turn
+$ .claude/hooks/require-green-build.sh
+require-green-build.sh: `mvn -q test` failed (attempt 1 of 3, stop_hook_active=false). Last 20 lines:
+<span class="terminal__err">[ERROR]   GreetingControllerTest.defaultsToWorld:22 JSON path "$.message" expected:&lt;Hello, world&gt; but was:&lt;Hi, world&gt;</span>
+<span class="terminal__err">[ERROR] Tests run: 2, Failures: 2, Errors: 0, Skipped: 0</span>
+$ echo $?
+<span class="terminal__err">2</span>  # turn blocked: Claude has to fix it
+# Claude reverts to "Hello, " and tries again
+$ mvn test
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+[INFO] <span class="terminal__ok">BUILD SUCCESS</span></pre>
+            </figure>
             <p class="card__not">What this is not: it does not include Claude Code itself (you need your own subscription and CLI). Markdown, not a PDF and not a video course, with no bundled future updates and no 1:1 support.</p>
             <a class="btn btn--primary" href="https://izzrlabs.gumroad.com/l/weloxy" target="_blank" rel="noopener">Get it on Gumroad</a>
             <p class="muted">The 3 hooks in this kit are free on GitHub &mdash; see the Free section below.</p>
@@ -123,5 +147,7 @@
       </ul>
     </div>
   </footer>
+  <script src="assets/js/terminal.js" defer></script>
+  <script src="assets/js/flipcard.js" defer></script>
 </body>
 </html>
