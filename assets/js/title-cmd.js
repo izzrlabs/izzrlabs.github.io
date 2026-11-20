@@ -157,7 +157,7 @@
             finish(job);
           }, last ? 900 : 0);
           run(n + 1);
-        }, heading ? 150 : 60);
+        }, heading ? 550 : 60); // short pause after a title before its text starts
       });
     })(0);
   } catch (err) {
