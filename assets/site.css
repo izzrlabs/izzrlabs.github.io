@@ -777,3 +777,52 @@ textarea {
 .terminal--post .terminal__log {
   min-height: 0;
 }
+
+/* ---------- Terminal replay (terminal.js) ----------
+   Only appear while/after the script runs; without JS the log is static. */
+.terminal {
+  transition: border-color 0.6s ease, box-shadow 0.6s ease;
+}
+
+.terminal__cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.15em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  animation: terminal-blink 1.05s steps(1) infinite;
+}
+
+.terminal__cursor--typing {
+  animation: none;
+}
+
+.terminal__spin {
+  color: var(--accent);
+}
+
+/* The build finished: the window edge takes the result's color, once. */
+.terminal--ok {
+  border-color: var(--accent-kit);
+  box-shadow: 0 0 0 1px rgba(109, 179, 63, 0.25), 0 0 32px rgba(109, 179, 63, 0.12);
+}
+
+.terminal--err {
+  border-color: #f87171;
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.25), 0 0 32px rgba(248, 113, 113, 0.1);
+}
+
+@keyframes terminal-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terminal,
+  .terminal__cursor {
+    transition: none;
+    animation: none;
+  }
+}
