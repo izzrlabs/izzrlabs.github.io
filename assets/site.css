@@ -859,3 +859,24 @@ textarea {
 .btn--primary .btn__cmd .terminal__cursor {
   background: currentColor;
 }
+
+/* ---------- Title and lead typed in after a menu click (title-cmd.js) ----------
+   The real content keeps its place (hidden); an aria-hidden copy on top types. */
+.type-over {
+  position: relative;
+}
+
+.type-over .type-over__real,
+.type-over--wait {
+  visibility: hidden;
+}
+
+.type-over__copy {
+  position: absolute;
+  inset: 0;
+  visibility: visible;
+}
+
+.type-over--wait .type-over__copy {
+  visibility: hidden;
+}
