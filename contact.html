@@ -51,14 +51,14 @@
     <section class="hero">
       <div class="container prose">
         <h1>Contact</h1>
-        <p>Have a question about a product, found a mistake, or just want to say hi? Send a message below &mdash; it goes to IZZR Labs through Formspree, and submitting takes you to a short thank-you page.</p>
+        <p>Have a question about a product, found a mistake, or just want to say hi? Send a message.</p>
       </div>
     </section>
 
     <section class="section">
-      <div class="container prose">
+      <div class="container contact">
         <!-- Formspree form (IZZR Labs site contact), set 2026-11-18. -->
-        <form class="form" action="https://formspree.io/f/xoedwbjy" method="POST">
+        <form class="form contact__form" action="https://formspree.io/f/xoedwbjy" method="POST">
           <div class="form-field">
             <label for="name">Name</label>
             <input id="name" name="name" type="text" required>
@@ -77,11 +77,27 @@
             <label for="_gotcha">Leave this field empty</label>
             <input id="_gotcha" name="_gotcha" type="text" tabindex="-1" autocomplete="off">
           </p>
-          <button class="btn btn--primary" type="submit">Send message</button>
+          <div class="contact__send">
+            <button class="btn btn--primary" type="submit">Send message</button>
+            <p class="contact__note">Sent through Formspree. You&rsquo;ll land on a short thank-you page.</p>
+          </div>
         </form>
 
-        <h2>Other ways to reach me</h2>
-        <p>Already bought something? Product support goes through Gumroad &mdash; message me from your purchase there and I'll see it. You can also browse the <a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">Gumroad store</a> or the <a href="https://github.com/izzrlabs" target="_blank" rel="noopener">GitHub account</a>.</p>
+        <aside class="contact__side" aria-labelledby="contact-other">
+          <h2 id="contact-other">Other ways to reach me</h2>
+          <ul class="contact__list">
+            <li>
+              <h3>Already bought something?</h3>
+              <p>Product support goes through Gumroad: message me from your purchase and I&rsquo;ll see it.</p>
+              <a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">Gumroad store <span aria-hidden="true">&rarr;</span></a>
+            </li>
+            <li>
+              <h3>Want to see the code?</h3>
+              <p>The free Claude Code hooks are on GitHub.</p>
+              <a href="https://github.com/izzrlabs" target="_blank" rel="noopener">github.com/izzrlabs <span aria-hidden="true">&rarr;</span></a>
+            </li>
+          </ul>
+        </aside>
       </div>
     </section>
   </main>

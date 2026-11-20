@@ -51,14 +51,14 @@
     <section class="hero">
       <div class="container prose">
         <h1>Contato</h1>
-        <p>Tem uma pergunta sobre um produto, achou um erro, ou só quer dar um alô? Envie uma mensagem abaixo &mdash; ela vai para a IZZR Labs pelo Formspree, e o envio leva você a uma página curta de agradecimento. Pode escrever em português, que eu respondo em português.</p>
+        <p>Tem uma pergunta sobre um produto, achou um erro, ou só quer dar um alô? Mande uma mensagem. Pode escrever em português, que eu respondo em português.</p>
       </div>
     </section>
 
     <section class="section">
-      <div class="container prose">
+      <div class="container contact">
         <!-- Formspree form (IZZR Labs site contact), set 2026-11-18. -->
-        <form class="form" action="https://formspree.io/f/xoedwbjy" method="POST">
+        <form class="form contact__form" action="https://formspree.io/f/xoedwbjy" method="POST">
           <div class="form-field">
             <label for="name">Nome</label>
             <input id="name" name="name" type="text" required>
@@ -77,11 +77,27 @@
             <label for="_gotcha">Deixe este campo em branco</label>
             <input id="_gotcha" name="_gotcha" type="text" tabindex="-1" autocomplete="off">
           </p>
-          <button class="btn btn--primary" type="submit">Enviar mensagem</button>
+          <div class="contact__send">
+            <button class="btn btn--primary" type="submit">Enviar mensagem</button>
+            <p class="contact__note">Enviado pelo Formspree. Depois do envio, você vê uma página curta de agradecimento.</p>
+          </div>
         </form>
 
-        <h2>Outras formas de falar comigo</h2>
-        <p>Já comprou alguma coisa? Suporte de produto é pelo Gumroad &mdash; mande uma mensagem a partir da sua compra lá, e eu vejo. Você também pode navegar pela <a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">loja no Gumroad</a> ou pela conta no <a href="https://github.com/izzrlabs" target="_blank" rel="noopener">GitHub</a>.</p>
+        <aside class="contact__side" aria-labelledby="contact-other">
+          <h2 id="contact-other">Outras formas de falar comigo</h2>
+          <ul class="contact__list">
+            <li>
+              <h3>Já comprou alguma coisa?</h3>
+              <p>O suporte de produto é pelo Gumroad: mande uma mensagem a partir da sua compra, e eu vejo.</p>
+              <a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">Loja no Gumroad <span aria-hidden="true">&rarr;</span></a>
+            </li>
+            <li>
+              <h3>Quer ver o código?</h3>
+              <p>Os hooks grátis do Claude Code estão no GitHub (em inglês).</p>
+              <a href="https://github.com/izzrlabs" target="_blank" rel="noopener">github.com/izzrlabs <span aria-hidden="true">&rarr;</span></a>
+            </li>
+          </ul>
+        </aside>
       </div>
     </section>
   </main>
