@@ -95,6 +95,28 @@ iterative fib(90)           = 2880067194370816120</code></pre>
           <li>Function calls other code that never touches the map: use <code>computeIfAbsent</code>.</li>
           <li>Function recurses through the same map: use <code>get</code>, compute, <code>putIfAbsent</code>, or a loop.</li>
         </ul>
+        <h2>The whole run</h2>
+        <p>Here is the complete output of <code>java RecursiveMemo.java</code>, copied from a real run on Java 17:</p>
+        <figure class="terminal terminal--post">
+          <figcaption class="terminal__title">RecursiveMemo.java <span class="visually-hidden">&mdash; full output, Java 17</span></figcaption>
+          <pre class="terminal__log" data-retype>$ java RecursiveMemo.java
+== (a) recursive computeIfAbsent ==
+HashMap: java.util.ConcurrentModificationException
+ConcurrentHashMap: java.lang.IllegalStateException: Recursive update
+== (b) fixed ==
+HashMap fib(90)             = 2880067194370816120
+ConcurrentHashMap fib(90)   = 2880067194370816120
+iterative fib(90)           = 2880067194370816120
+== (c) two threads, same key ==
+function calls = 1, value = loaded</pre>
+        </figure>
+        <p>The last line is the one worth remembering. Two threads asked for the same key; the loader ran once.</p>
+        <div class="odo-stat">
+          <span class="odo-stat__before">2 threads asked</span>
+          <span class="odo-stat__after"><span class="odo" data-odo-from="2">1</span> function call</span>
+          <p class="odo-stat__note">2 is the number of threads in <code>RecursiveMemo.java</code>; 1 is the <code>function calls</code> value printed above.</p>
+        </div>
+
         <h2>Where this shows up in interviews</h2>
         <p>"What happens if two threads call <code>computeIfAbsent</code> on the same key?" is a classic Java interview question, and the recursive version is the follow-up that separates people who have read the javadoc from people who have only used the method.</p>
         <p>Chapter 1 of my <a href="https://izzrlabs.gumroad.com/l/kxtubc" target="_blank" rel="noopener">Modern Java &amp; Spring Boot Interview Guide</a> (Core Java &amp; Collections) covers HashMap internals and concurrent collections, and the guide comes with a Maven repository of JUnit 5 tests you can run with <code>mvn test</code>. It's $29, one-time. The code in this post is separate and standalone: copy <code>RecursiveMemo.java</code>, run it, and change it until the exceptions stop surprising you.</p>
@@ -129,5 +151,7 @@ iterative fib(90)           = 2880067194370816120</code></pre>
       </ul>
     </div>
   </footer>
+  <script src="../assets/js/terminal.js" defer></script>
+  <script src="../assets/js/odometer.js" defer></script>
 </body>
 </html>
