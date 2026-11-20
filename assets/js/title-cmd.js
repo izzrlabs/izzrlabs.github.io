@@ -1,5 +1,5 @@
-// IZZR Labs — after a menu click, the page title and the text under it are
-// typed in, as if someone were writing them, with the orange cursor.
+// IZZR Labs — after a menu click, the title and the text at the top of the
+// page are typed in (About: its whole body), as if someone were writing them, with the orange cursor.
 //
 // Only after a click on the main menu or the logo (a flag in sessionStorage),
 // never on a direct visit. The real elements stay in the DOM the whole time
@@ -41,10 +41,24 @@
     return;
   }
 
-  // The opening line right under the title (same block). Pages whose text
-  // starts in another section (About) get only the title typed.
-  var next = h1.nextElementSibling;
-  var lead = next && next.tagName === 'P' ? next : null;
+  // The top of the page: the title and the text in its section. When that
+  // section holds only the title (About), the body right under it is typed
+  // too. Terminals, forms and buttons are left alone.
+  var SKIP = '.terminal, form, .flip, .btn, nav, figure';
+  var TEXT = 'h1, h2, h3, p, li';
+  function textBlocks(root) {
+    return Array.prototype.filter.call(root.querySelectorAll(TEXT), function (el) {
+      return !el.closest(SKIP) && el.textContent.trim() && !el.querySelector(TEXT);
+    });
+  }
+  var top = h1.closest('section') || h1.parentNode;
+  var blocks = textBlocks(top);
+  if (blocks.length === 1) {
+    var body = top.nextElementSibling;
+    if (body && body.querySelector('.prose')) {
+      blocks = blocks.concat(textBlocks(body));
+    }
+  }
 
   var cursor = document.createElement('span');
   cursor.className = 'terminal__cursor terminal__cursor--typing';
@@ -115,28 +129,37 @@
   }
 
   try {
-    var titleJob = prepare(h1);
-    var leadJob = lead ? prepare(lead) : null;
-    if (leadJob) {
-      leadJob.el.classList.add('type-over--wait'); // waits its turn, invisible
-    }
-    show(titleJob, 0);
-    // Title: letter by letter, at most about 0.9 s; text: about 1.4 s.
-    type(titleJob, Math.min(60, 900 / Math.max(titleJob.total, 1)), 1, function () {
-      setTimeout(function () {
-        finish(titleJob);
-        if (!leadJob) {
-          return;
-        }
-        leadJob.el.classList.remove('type-over--wait');
-        type(leadJob, 16, Math.max(1, Math.round(leadJob.total / 85)), function () {
-          cursor.classList.remove('terminal__cursor--typing');
-          setTimeout(function () {
-            finish(leadJob);
-          }, 900);
-        });
-      }, 180);
+    var jobs = blocks.map(prepare);
+    var textTotal = jobs.reduce(function (sum, job) {
+      return sum + (/^H[1-3]$/.test(job.el.tagName) ? 0 : job.total);
+    }, 0) || 1;
+    jobs.forEach(function (job) {
+      job.el.classList.add('type-over--wait'); // waits its turn, invisible
     });
+    // Titles letter by letter (at most ~0.4 s); text blocks share the rest.
+    (function run(n) {
+      if (n >= jobs.length) {
+        cursor.classList.remove('terminal__cursor--typing');
+        return;
+      }
+      var job = jobs[n];
+      job.el.classList.remove('type-over--wait');
+      var heading = /^H[1-3]$/.test(job.el.tagName);
+      // Text blocks share ~2 s by size (each 0.15-0.6 s), so a full screen
+      // takes about 3 s at most whatever the page.
+      var ms = heading ? Math.min(55, 300 / Math.max(job.total, 1)) : 16;
+      var dur = Math.max(150, Math.min(600, 2000 * job.total / textTotal));
+      var step = heading ? 1 : Math.max(1, Math.ceil(job.total / (dur / 16)));
+      type(job, ms, step, function () {
+        setTimeout(function () {
+          var last = n === jobs.length - 1;
+          setTimeout(function () {
+            finish(job);
+          }, last ? 900 : 0);
+          run(n + 1);
+        }, heading ? 150 : 60);
+      });
+    })(0);
   } catch (err) {
     var stuck = document.querySelectorAll('.type-over__copy');
     for (var s = 0; s < stuck.length; s++) {
