@@ -111,11 +111,6 @@ iterative fib(90)           = 2880067194370816120
 function calls = 1, value = loaded</pre>
         </figure>
         <p>The last line is the one worth remembering. Two threads asked for the same key; the loader ran once.</p>
-        <div class="odo-stat">
-          <span class="odo-stat__before">2 threads asked</span>
-          <span class="odo-stat__after"><span class="odo" data-odo-from="2">1</span> function call</span>
-          <p class="odo-stat__note">2 is the number of threads in <code>RecursiveMemo.java</code>; 1 is the <code>function calls</code> value printed above.</p>
-        </div>
 
         <h2>Where this shows up in interviews</h2>
         <p>"What happens if two threads call <code>computeIfAbsent</code> on the same key?" is a classic Java interview question, and the recursive version is the follow-up that separates people who have read the javadoc from people who have only used the method.</p>
@@ -152,6 +147,5 @@ function calls = 1, value = loaded</pre>
     </div>
   </footer>
   <script src="../assets/js/terminal.js" defer></script>
-  <script src="../assets/js/odometer.js" defer></script>
 </body>
 </html>
