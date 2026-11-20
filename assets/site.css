@@ -69,6 +69,8 @@ blockquote {
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Reserve the scrollbar's space on every page, so short pages (About) don't jump sideways. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -292,6 +294,16 @@ h3 {
 }
 
 .prose {
+  max-width: var(--prose);
+}
+
+/* Text pages: the column starts at the same left edge as the header and the other pages;
+   only the reading width is limited. */
+.container.prose {
+  max-width: var(--maxw);
+}
+
+.container.prose > * {
   max-width: var(--prose);
 }
 
