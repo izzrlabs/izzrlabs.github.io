@@ -826,3 +826,36 @@ textarea {
     animation: none;
   }
 }
+
+/* ---------- Gumroad buttons show their command (btn-cmd.js) ----------
+   The label keeps the button's size; the command is drawn on top. */
+.btn:has(.btn__cmd) {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn__cmd {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.btn--cmd .btn__label {
+  visibility: hidden;
+}
+
+.btn--cmd .btn__cmd {
+  display: flex;
+}
+
+/* On the orange button the cursor takes the text color (dark). */
+.btn--primary .btn__cmd .terminal__cursor {
+  background: currentColor;
+}
