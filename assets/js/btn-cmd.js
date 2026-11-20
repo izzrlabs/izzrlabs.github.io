@@ -1,4 +1,4 @@
-// IZZR Labs — Gumroad buttons show the command they run (Home, Products).
+// IZZR Labs — Gumroad and GitHub buttons show the command they run (Home, Products).
 //
 // On mouse hover (or keyboard focus), the button's label gives way to the real
 // destination typed as a shell command: "$ open izzrlabs.gumroad.com/l/...".
@@ -15,7 +15,9 @@
   var mouse = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   var CHAR_MS = 16;
-  var buttons = document.querySelectorAll('a.btn[href*="gumroad.com"]');
+  var buttons = document.querySelectorAll(
+    'a.btn[href*="gumroad.com"], a.btn[href*="github.com/izzrlabs"]'
+  );
 
   Array.prototype.forEach.call(buttons, function (btn) {
     var url;
@@ -24,7 +26,9 @@
     } catch (err) {
       return;
     }
-    var command = '$ open ' + url.host + url.pathname.replace(/\/$/, '');
+    var path = url.pathname.replace(/\/$/, '');
+    var command = '$ open ' + url.host + path;
+    var shortCommand = '$ open ' + path.split('/').pop();
 
     var label = document.createElement('span');
     label.className = 'btn__label';
@@ -50,11 +54,15 @@
       }
       btn.classList.add('btn--cmd');
       cursor.classList.add('terminal__cursor--typing');
+      // Narrow button: drop the host so the command never gets cut.
+      typed.textContent = command;
+      var text = cmd.scrollWidth > cmd.clientWidth ? shortCommand : command;
+      typed.textContent = '';
       var i = 0;
       (function next() {
         i += 1;
-        typed.textContent = command.slice(0, i);
-        if (i < command.length) {
+        typed.textContent = text.slice(0, i);
+        if (i < text.length) {
           timer = setTimeout(next, CHAR_MS);
         } else {
           cursor.classList.remove('terminal__cursor--typing');
