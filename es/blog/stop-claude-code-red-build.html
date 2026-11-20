@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Evita que Claude Code termine con el build en rojo — IZZR Labs</title>
+  <meta name="description" content="Un hook de Stop que impide que Claude Code cierre un turno con el build en rojo, con el marcador que evita que corra en sesiones que ni tocaron código.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="IZZR Labs">
+  <meta property="og:title" content="Evita que Claude Code termine con el build en rojo">
+  <meta property="og:description" content="Un hook de Stop que impide que Claude Code cierre un turno con el build en rojo, con el marcador que evita que corra en sesiones que ni tocaron código.">
+  <meta property="og:url" content="https://izzrlabs.github.io/es/blog/stop-claude-code-red-build.html">
+  <meta property="og:image" content="https://izzrlabs.github.io/assets/img/izzrlabs-logo.png">
+  <meta property="og:image:alt" content="Logo de IZZR Labs: un ícono de frasco negro con las letras IZ, sobre fondo naranja">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://izzrlabs.github.io/es/blog/stop-claude-code-red-build.html">
+  <link rel="alternate" hreflang="en" href="https://izzrlabs.github.io/blog/stop-claude-code-red-build.html">
+  <link rel="alternate" hreflang="pt-BR" href="https://izzrlabs.github.io/pt/blog/stop-claude-code-red-build.html">
+  <link rel="alternate" hreflang="es" href="https://izzrlabs.github.io/es/blog/stop-claude-code-red-build.html">
+  <link rel="alternate" hreflang="x-default" href="https://izzrlabs.github.io/blog/stop-claude-code-red-build.html">
+  <link rel="alternate" type="application/rss+xml" title="IZZR Labs blog" href="https://izzrlabs.github.io/feed.xml">
+  <link rel="icon" href="../../favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="../../assets/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="../../assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="site-logo" href="../index.html">IZZR Labs</a>
+      <nav class="site-nav" aria-label="Principal">
+        <ul>
+          <li><a href="../index.html">Inicio</a></li>
+          <li><a href="../products.html">Productos</a></li>
+          <li><a href="index.html" aria-current="page">Blog</a></li>
+          <li><a href="../about.html">Acerca de</a></li>
+          <li><a href="../contact.html">Contacto</a></li>
+        </ul>
+      </nav>
+      <nav class="lang-switch" aria-label="Idioma">
+        <ul>
+          <li><a href="../../blog/stop-claude-code-red-build.html" lang="en" hreflang="en">EN</a></li>
+          <li><a href="../../pt/blog/stop-claude-code-red-build.html" lang="pt-BR" hreflang="pt-BR">PT</a></li>
+          <li><span aria-current="true">ES</span></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="section">
+      <div class="container prose">
+        <h1>Evita que Claude Code termine con el build en rojo</h1>
+        <p class="post-meta"><time datetime="2026-11-18">18 de noviembre de 2026</time> &middot; 5 min de lectura</p>
+
+        <h2>El problema</h2>
+        <p>Claude Code termina un turno, te dice que la funcionalidad está lista, y el build está en rojo. Nada en ese turno lo comprobó. Te enteras de una de dos formas: unos minutos después, cuando el CI falla en el pull request, o veinte minutos después, cuando tú mismo ejecutas la suite de tests antes del push, por costumbre, no porque Claude te lo pidiera.</p>
+        <p>No es que Claude sea descuidado. Editó archivos, quizá ejecutó un test que eligió por su cuenta, decidió que la tarea parecía terminada y te devolvió el control. Nada en ese ciclo exigía que toda la suite pasara antes de que el turno pudiera terminar. Un hook puede exigirlo.</p>
+
+        <h2>Por qué no en PostToolUse</h2>
+        <p>Un hook de build conectado a <code>PostToolUse</code> corre después de cada edición: cada método que añades, cada import que corriges, cada errata que arreglas. En un proyecto real eso significa ejecutar un build de Maven decenas de veces durante una refactorización, la mayoría sobre código que aún no está terminado y que ni debería compilar limpio a mitad de la edición. Es lento, y no te dice nada que no esperaras ya.</p>
+        <p>El evento que quieres es <code>Stop</code>. Se dispara una vez al final del turno, cuando Claude termina de responder por su cuenta &mdash; después de que todas las ediciones de ese turno ya están hechas, no después de cada una. Dos casos límite que conviene saber: no se dispara si el usuario interrumpe en vez de que Claude termine solo, y se dispara de nuevo, con <code>stop_hook_active</code> activado, si un hook de <code>Stop</code> anterior ya bloqueó una vez en este mismo turno &mdash; el script de abajo depende justo de ese segundo caso.</p>
+
+        <h2>Dónde va en settings.json</h2>
+        <pre><code>{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/require-green-build.sh",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+        <p>Dos detalles merecen atención. Las comillas alrededor de <code>${CLAUDE_PROJECT_DIR}</code> importan: sin ellas, una carpeta de proyecto con un espacio en la ruta rompe el comando antes de que el hook llegue a correr. Y <code>Stop</code> no acepta ningún <code>matcher</code>. A diferencia de <code>PreToolUse</code> o <code>PostToolUse</code>, que filtran por nombre de herramienta, <code>Stop</code> se dispara en cada turno, sin más, sin nada que lo acote.</p>
+
+        <h2>El hook, completo</h2>
+        <p>Este es el script completo, listo para copiar y pegar. Busca un marcador de build, lee si el evento <code>Stop</code> actual ya es la repetición de uno bloqueado, ejecuta el build y o deja que el turno termine o lo bloquea con el log adjunto.</p>
+        <pre><code>#!/bin/bash
+# Stop hook (see settings.json; the Stop event takes no matcher -- it fires once per
+# turn, right before Claude is about to hand control back to you).
+#
+# The problem this avoids: a build hook on PostToolUse re-runs the build after every
+# single file edit, which is slow and useless in the middle of a refactor. This script
+# runs on Stop instead -- once per turn -- and only when the PostToolUse companion hook
+# (format-on-edit.sh) has already marked something build-relevant as changed. Edit only
+# a .md file during the turn, and that marker never gets created, so the turn ends with
+# no build at all. That's the point, not a bug.
+#
+# BUILD_CMD: the default below is the fast loop (`mvn -q test`). In a multi-module repo,
+# scope it to the module you're actually working in, for example:
+#   BUILD_CMD="mvn -q test -pl your-module -am"
+# `-pl your-module` tells Maven to build only that module; `-am` ("also make") builds
+# whatever that module depends on first, so the scoped build still has everything it
+# needs to compile and run.
+# A Gradle project would use `gradle check` here instead -- cited as the equivalent,
+# not tested: the project this hook was written against is Maven.
+set -euo pipefail
+
+BUILD_CMD="mvn -q test"
+MAX_CONSECUTIVE_FAILURES=3
+
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
+MARKER="$PROJECT_DIR/.claude/.build-pending"
+
+if [ ! -f "$MARKER" ]; then
+  exit 0  # nothing build-relevant changed this turn -- nothing to prove, let Claude stop
+fi
+
+INPUT="$(cat)"
+STOP_HOOK_ACTIVE="$(python3 - "$INPUT" <<'PYEOF'
+import json, sys
+try:
+    payload = json.loads(sys.argv[1])
+except (IndexError, ValueError):
+    print("false")
+    sys.exit(0)
+print(str(payload.get("stop_hook_active", False)).lower())
+PYEOF
+)"
+
+FAILURES="$(cat "$MARKER" 2>/dev/null || echo 0)"
+case "$FAILURES" in ''|*[!0-9]*) FAILURES=0 ;; esac
+
+if [ "$FAILURES" -ge "$MAX_CONSECUTIVE_FAILURES" ]; then
+  echo "require-green-build.sh: build still red after $FAILURES attempts in a row," \
+       "giving up instead of looping forever (stop_hook_active=$STOP_HOOK_ACTIVE)." >&2
+  rm -f "$MARKER"
+  exit 0  # let Claude stop anyway -- a human needs to look at this, not another retry
+fi
+
+cd "$PROJECT_DIR"
+BUILD_LOG="$(mktemp)"
+if $BUILD_CMD >"$BUILD_LOG" 2>&1; then
+  rm -f "$MARKER" "$BUILD_LOG"
+  exit 0  # green: the marker is cleared, Claude may stop
+fi
+
+FAILURES=$((FAILURES + 1))
+echo "$FAILURES" > "$MARKER"
+
+{
+  echo "require-green-build.sh: \`$BUILD_CMD\` failed (attempt $FAILURES of $MAX_CONSECUTIVE_FAILURES, stop_hook_active=$STOP_HOOK_ACTIVE). Last 20 lines:"
+  tail -n 20 "$BUILD_LOG"
+} >&2
+rm -f "$BUILD_LOG"
+exit 2  # blocks the Stop: Claude sees this stderr and keeps working instead of stopping</code></pre>
+
+        <h2>Cómo se ve un build en rojo</h2>
+        <p>Cuando el build falla, el script sale con código 2 y escribe su mensaje en stderr. Claude Code trata esa combinación como un bloqueo: el turno no termina, y Claude ve el texto de stderr como parte de lo que lee a continuación, con el log incluido. El código 0 hace lo contrario &mdash; o no había nada que compilar, o el build volvió en verde, y el turno puede terminar con normalidad.</p>
+        <p><code>MAX_CONSECUTIVE_FAILURES</code> en 3 existe para que un build roto de verdad no atrape a Claude en un ciclo de reintentos para siempre. Tras el tercer fallo seguido, el siguiente evento <code>Stop</code> se rinde sin volver a ejecutar el build, con la idea de que una persona debe mirarlo, no un cuarto intento automático. <code>stop_hook_active</code>, leído del JSON que Claude Code envía por la entrada estándar, le dice al script si este evento <code>Stop</code> ya es resultado de un bloqueo anterior. Aquí solo cambia el mensaje, no la decisión de ejecutar el build.</p>
+        <p>Lo que verás realmente en un intento fallido es una línea en stderr, seguida de lo que haya al final del log del build:</p>
+        <pre><code>require-green-build.sh: `mvn -q test` failed (attempt 1 of 3, stop_hook_active=false). Last 20 lines:</code></pre>
+        <p>&mdash; seguida, en tu propia terminal, de las 20 últimas líneas reales de ese <code>mvn -q test</code> fallido. Esa parte no se reproduce aquí, porque lo que aparece depende por completo de tu test roto, no de este script.</p>
+
+        <h2>La trampa que hace que este hook valga la pena</h2>
+        <p>Instala solo este script y tendrás un hook que se queda callado para siempre. Solo ejecuta el build si ya existe un archivo marcador, <code>.claude/.build-pending</code>, y nada dentro de este script crea ese marcador. Ese trabajo es de un hook <code>PostToolUse</code> compañero, que observa cada archivo que Claude edita y crea el marcador cuando el archivo es uno que de verdad puede poner el build en rojo: un fuente <code>.java</code>, cualquier <code>pom.xml</code>, una migración <code>.sql</code> de Flyway, o un archivo de configuración <code>application*.{yml,yaml,properties}</code>. Un detalle importa aquí: ese hook compañero solo crea el marcador si aún no existe (<code>[ -f "$MARKER" ] || echo 0 &gt; "$MARKER"</code>) &mdash; nunca sobrescribe uno que ya está. Escribe tu propia versión con un <code>touch</code> simple o un <code>echo &gt; "$MARKER"</code> incondicional en cada edición y reinicias el contador de fallos cada vez, así que la protección de 3 intentos de arriba nunca llega a saltar y un build roto de verdad bloquea para siempre en vez de rendirse tras tres.</p>
+        <p>Esa división es intencionada, no un accidente. Una sesión en la que Claude solo tocó un README o un documento de diseño nunca crea el marcador, así que el hook de <code>Stop</code> sale en su primera comprobación y el turno termina sin build alguno &mdash; al instante, sin pagar minutos de tests por una errata en un archivo Markdown. Ese es todo el sentido del marcador, no un hueco pendiente de arreglar.</p>
+
+        <h2>Limitaciones</h2>
+        <ul>
+          <li><strong>Tiempo.</strong> Una suite lenta puede pasarse del <code>timeout</code> de 5 minutos definido en el hook. Limita el comando al módulo que estás tocando con los flags de Maven mostrados arriba, o cambia a un <code>BUILD_CMD</code> más rápido.</li>
+          <li><strong>Monorepo.</strong> Es un comando ligado a un <code>CLAUDE_PROJECT_DIR</code>, no algo que recorre cada módulo del repositorio buscando el que cambió.</li>
+          <li><strong>Gradle.</strong> Un proyecto Gradle usaría <code>gradle check</code> aquí &mdash; citado como equivalente, no probado, porque el proyecto para el que se escribió este hook usa Maven.</li>
+          <li><strong>Requisitos.</strong> El script necesita <code>bash</code> y <code>python3</code> en la máquina que ejecuta Claude Code. En Windows eso significa WSL o Git Bash, no el símbolo del sistema nativo.</li>
+        </ul>
+
+        <h2>Consigue los hooks</h2>
+        <p>Este hook, y otros dos que bloquean un secreto obvio antes de que se escriba y formatean un archivo después de una edición, son gratis y con licencia MIT en GitHub: <a href="https://github.com/izzrlabs/claude-code-java-hooks" target="_blank" rel="noopener">github.com/izzrlabs/claude-code-java-hooks</a>. El kit de Claude Code parte de esos mismos tres hooks y suma 3 subagentes, 3 skills, 6 comandos de barra, 5 plantillas de CLAUDE.md, un ejemplo multimódulo completo y una guía en 7 partes &mdash; <a href="https://izzrlabs.gumroad.com/l/weloxy" target="_blank" rel="noopener">míralo en Gumroad</a>. El repositorio y el kit están en inglés.</p>
+
+        <p class="author">Israel Duarte, ingeniero Java &mdash; primero escribo el código y después las afirmaciones: cada regla de este post salió de un script que corre de verdad, no de una diapositiva. Mira qué más he <a href="../products.html">construido</a>.</p>
+
+        <aside class="newsletter" aria-labelledby="newsletter-title">
+          <h2 id="newsletter-title">Recibe los posts nuevos por correo</h2>
+          <p>Un correo corto cuando sale un post nuevo: el título, un resumen de una línea y el enlace. El aviso llega en inglés. Para darte de baja, un clic.</p>
+          <form class="newsletter__form" action="https://buttondown.com/api/emails/embed-subscribe/israeltduarte" method="post">
+            <label for="newsletter-email">Tu correo</label>
+            <div class="newsletter__row">
+              <input type="email" id="newsletter-email" name="email" required autocomplete="email">
+              <button class="btn btn--primary" type="submit">Suscribirme</button>
+            </div>
+          </form>
+          <p class="newsletter__note muted">Tu correo queda en Buttondown, nuestro servicio de newsletter, y solo se usa para estos avisos. <a href="../privacy.html">Privacidad</a>.</p>
+        </aside>
+
+        <p><a href="index.html">Volver al Blog</a></p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 IZZR Labs</p>
+      <ul class="footer-links">
+        <li><a href="../privacy.html">Privacidad</a></li>
+        <li><a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">Tienda en Gumroad</a></li>
+        <li><a href="https://github.com/izzrlabs" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

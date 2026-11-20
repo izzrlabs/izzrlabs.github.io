@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>7 preguntas de entrevista sobre Spring Boot 4, con respuestas cortas — IZZR Labs</title>
+  <meta name="description" content="Siete preguntas de entrevista sobre el salto de Spring Boot 3 a 4, cada una con una respuesta corta y la repregunta que separa la respuesta memorizada de la real.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="IZZR Labs">
+  <meta property="og:title" content="7 preguntas de entrevista sobre Spring Boot 4, con respuestas cortas">
+  <meta property="og:description" content="Siete preguntas de entrevista sobre el salto de Spring Boot 3 a 4, cada una con una respuesta corta y la repregunta que separa la respuesta memorizada de la real.">
+  <meta property="og:url" content="https://izzrlabs.github.io/es/blog/spring-boot-4-interview-questions.html">
+  <meta property="og:image" content="https://izzrlabs.github.io/assets/img/izzrlabs-logo.png">
+  <meta property="og:image:alt" content="Logo de IZZR Labs: un ícono de frasco negro con las letras IZ, sobre fondo naranja">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://izzrlabs.github.io/es/blog/spring-boot-4-interview-questions.html">
+  <link rel="alternate" hreflang="en" href="https://izzrlabs.github.io/blog/spring-boot-4-interview-questions.html">
+  <link rel="alternate" hreflang="pt-BR" href="https://izzrlabs.github.io/pt/blog/spring-boot-4-interview-questions.html">
+  <link rel="alternate" hreflang="es" href="https://izzrlabs.github.io/es/blog/spring-boot-4-interview-questions.html">
+  <link rel="alternate" hreflang="x-default" href="https://izzrlabs.github.io/blog/spring-boot-4-interview-questions.html">
+  <link rel="alternate" type="application/rss+xml" title="IZZR Labs blog" href="https://izzrlabs.github.io/feed.xml">
+  <link rel="icon" href="../../favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="../../assets/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="../../assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="site-logo" href="../index.html">IZZR Labs</a>
+      <nav class="site-nav" aria-label="Principal">
+        <ul>
+          <li><a href="../index.html">Inicio</a></li>
+          <li><a href="../products.html">Productos</a></li>
+          <li><a href="index.html" aria-current="page">Blog</a></li>
+          <li><a href="../about.html">Acerca de</a></li>
+          <li><a href="../contact.html">Contacto</a></li>
+        </ul>
+      </nav>
+      <nav class="lang-switch" aria-label="Idioma">
+        <ul>
+          <li><a href="../../blog/spring-boot-4-interview-questions.html" lang="en" hreflang="en">EN</a></li>
+          <li><a href="../../pt/blog/spring-boot-4-interview-questions.html" lang="pt-BR" hreflang="pt-BR">PT</a></li>
+          <li><span aria-current="true">ES</span></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="section">
+      <div class="container prose">
+        <h1>7 preguntas de entrevista sobre Spring Boot 4, con respuestas cortas</h1>
+        <p class="post-meta"><time datetime="2026-11-18">18 de noviembre de 2026</time> &middot; 5 min de lectura</p>
+
+        <p>Siete preguntas que un entrevistador podría hacer de verdad sobre el salto a Spring Boot 4, cada una con una respuesta corta y la repregunta que separa una respuesta memorizada de una real.</p>
+
+        <h2>¿Cuál es la versión mínima de Java para Spring Boot 4, y cuál usarías de verdad?</h2>
+        <p>Spring Boot 4 compila y corre desde Java 17. Ese es el piso, no una recomendación. Por debajo, Spring Framework 7 y Jakarta EE 11 también aceptan 17 como mínimo. En la práctica yo usaría 21 o 25, las dos versiones de soporte largo, porque son las que seguirán recibiendo parches de seguridad durante años, no porque el framework lo exija. La base de Java 21 que IZZR Labs eligió para sus productos es una decisión aparte de lo que Spring Boot 4 acepta técnicamente.</p>
+        <p><strong>Lo que el entrevistador está comprobando:</strong> si confundes mínimo soportado con recomendado, y si sabes separar una restricción del framework de una decisión de base del propio proyecto.</p>
+
+        <h2>Mis imports son <code>com.fasterxml.jackson.*</code>. ¿Qué se rompe?</h2>
+        <p>Jackson 3 mueve su group id y la mayoría de sus paquetes a <code>tools.jackson</code>, así que un renombrado directo arregla todo lo que estaba en los paquetes antiguos de core o databind. El corte sigue la línea del artefacto, no anotaciones contra todo lo demás: <code>jackson-annotations</code> no se mueve, así que cosas como <code>@JsonProperty</code> y <code>@JsonIgnore</code> se quedan donde estaban, en <code>com.fasterxml.jackson.annotation</code>. Las anotaciones que de verdad viven en <code>jackson-databind</code> &mdash; <code>@JsonSerialize</code>, <code>@JsonDeserialize</code>, <code>@JsonNaming</code>, <code>@JsonPOJOBuilder</code> &mdash; se mueven con él, a <code>tools.jackson.databind.annotation</code>. El otro cambio es que <code>ObjectMapper</code> cede terreno a <code>JsonMapper</code>, construido como un objeto inmutable configurado con un builder en vez de modificado después de crearlo.</p>
+        <p><strong>Lo que el entrevistador está comprobando:</strong> si sabes que la división es por artefacto &mdash; <code>jackson-annotations</code> contra <code>jackson-databind</code> &mdash; y no por "anotaciones contra el resto". Si te equivocas, el código que compilaba ayer da errores de import hoy.</p>
+
+        <h2>Mi build avisa que <code>spring-boot-starter-web</code> está deprecated. ¿Qué cambió?</h2>
+        <p>No es una caché vieja del repositorio local. El starter todavía resuelve, solo está deprecated en favor de módulos más específicos: un starter <code>-webmvc</code> dedicado en lugar del antiguo starter web genérico, un starter <code>-aspectj</code> aparte, un starter <code>-jackson</code> aparte, y el prefijo <code>security-</code> en los starters de OAuth2. Los nombres "clásicos" antiguos todavía resuelven por ahora, como puente mientras el proyecto migra, pero no es hacia donde va el ecosistema.</p>
+        <p><strong>Lo que el entrevistador está comprobando:</strong> que vayas al renombrado de la dependencia antes de ponerte a borrar carpetas del repositorio local por frustración.</p>
+
+        <h2><code>@MockBean</code> ya no está. ¿Qué lo reemplaza?</h2>
+        <p><code>@MockitoBean</code> y <code>@MockitoSpyBean</code>, que ahora viven en el propio <code>spring-test</code> en vez de en un paquete específico de Spring Boot. Ya estaban marcadas como deprecated desde la versión 3.4, así que su eliminación en 4.0 no debería sorprender a quien leyó los avisos del build. Una respuesta junior se queda en el nombre de la anotación nueva. Una respuesta senior añade por qué el cambio es mejor: las anotaciones nuevas corren sobre una SPI genérica de sobrescritura de beans que vive en el propio <code>spring-test</code>, el mismo mecanismo que hay detrás de <code>@TestBean</code>, en vez de un atajo específico de Spring Boot. Eso no evita el costo de un <code>ApplicationContext</code> nuevo &mdash; cada combinación distinta de beans sobrescritos sigue teniendo su propia entrada en la caché de contextos, como antes &mdash; pero hace que el mecanismo funcione igual con o sin Spring Boot en el classpath.</p>
+        <p><strong>Lo que el entrevistador está comprobando:</strong> si entiendes el razonamiento de diseño detrás del cambio, no solo el nombre nuevo que hay que escribir.</p>
+
+        <h2>¿Cómo encuentras las propiedades que cambiaron?</h2>
+        <p>Añade <code>spring-boot-properties-migrator</code> como dependencia, arranca la aplicación y lee el log de arranque. Informa de cada propiedad deprecated o renombrada que encuentra, junto con la clave que la reemplaza. Es temporal: cuando el log queda en silencio, la dependencia sale del <code>pom.xml</code>.</p>
+        <p><strong>Lo que el entrevistador está comprobando:</strong> si lo tratas como un paso de diagnóstico, no como algo que se queda para siempre en un build de producción.</p>
+
+        <h2>¿Cómo queda JUnit en Boot 4?</h2>
+        <p>Quitar JUnit 4 y su engine Vintage de <code>spring-boot-starter-test</code> no es un cambio de Boot 4 &mdash; eso ya pasó en Spring Boot 2.4, así que un proyecto en 3.x es tan solo-Jupiter como uno en 4.0. Lo nuevo está del lado del propio JUnit: Spring Boot 4.0 gestiona JUnit 6 (6.0.3 en Boot 4.0.9), y JUnit 6 marca formalmente el engine Vintage como deprecated, así que el descubrimiento de tests informa de un aviso de nivel INFO si todavía encuentra una clase de test al estilo JUnit 4 en cualquier parte del classpath &mdash; es una nota del descubrimiento de tests, no un aviso al arrancar la aplicación. En cualquier caso, el código todavía escrito a la manera antigua de JUnit 4 tiene que migrar antes de actualizar el framework, no durante.</p>
+        <p><strong>Lo que el entrevistador está comprobando:</strong> esta es a propósito la línea más arriesgada de la lista &mdash; si separas un cambio antiguo de Spring Boot de lo que es nuevo de verdad en 4.0, y si sabes nombrar la versión de JUnit que trae Boot 4 en vez de hablar vagamente de "la generación actual".</p>
+
+        <h2>Explícame el orden de la actualización en un servicio real.</h2>
+        <p>Limpia todos los avisos de deprecated mientras el servicio sigue en la versión anterior, porque esa versión te dice lo que viene sin romper nada todavía. Luego sube la versión de Java, añade el migrador de propiedades y los nombres clásicos de los starters como puente temporal, y pasa a Jackson 3 y a las nuevas anotaciones de mock un cambio cada vez. Solo cuando todo eso ha entrado y se ha probado cambio los starters puente por los modulares y quito el migrador definitivamente. Cada uno de esos pasos es su propio pull request, con la suite en verde al final &mdash; nunca un pull request que lo cambia todo de golpe.</p>
+        <p><strong>Lo que el entrevistador está comprobando:</strong> si tu opción por defecto es un único pull request gigante, o un orden que mantiene el servicio listo para desplegar después de cada paso.</p>
+
+        <h2>Sigue</h2>
+        <p>Empieza por el <a href="https://izzrlabs.gumroad.com/l/efvbc" target="_blank" rel="noopener">capítulo 1 del Interview Guide, gratis</a>. La guía completa cubre unas 120 preguntas en 10 capítulos &mdash; <a href="https://izzrlabs.gumroad.com/l/kxtubc" target="_blank" rel="noopener">mírala en Gumroad</a>. La guía está en inglés.</p>
+
+        <p class="author">Israel Duarte, ingeniero Java &mdash; primero escribo el código y después las afirmaciones: cada regla de este post salió de un script que corre de verdad, no de una diapositiva. Mira qué más he <a href="../products.html">construido</a>.</p>
+
+        <aside class="newsletter" aria-labelledby="newsletter-title">
+          <h2 id="newsletter-title">Recibe los posts nuevos por correo</h2>
+          <p>Un correo corto cuando sale un post nuevo: el título, un resumen de una línea y el enlace. El aviso llega en inglés. Para darte de baja, un clic.</p>
+          <form class="newsletter__form" action="https://buttondown.com/api/emails/embed-subscribe/israeltduarte" method="post">
+            <label for="newsletter-email">Tu correo</label>
+            <div class="newsletter__row">
+              <input type="email" id="newsletter-email" name="email" required autocomplete="email">
+              <button class="btn btn--primary" type="submit">Suscribirme</button>
+            </div>
+          </form>
+          <p class="newsletter__note muted">Tu correo queda en Buttondown, nuestro servicio de newsletter, y solo se usa para estos avisos. <a href="../privacy.html">Privacidad</a>.</p>
+        </aside>
+
+        <p><a href="index.html">Volver al Blog</a></p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 IZZR Labs</p>
+      <ul class="footer-links">
+        <li><a href="../privacy.html">Privacidad</a></li>
+        <li><a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">Tienda en Gumroad</a></li>
+        <li><a href="https://github.com/izzrlabs" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

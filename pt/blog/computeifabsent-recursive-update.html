@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seu cache com computeIfAbsent vai quebrar na recursão (HashMap e ConcurrentHashMap) — IZZR Labs</title>
+  <meta name="description" content="Memoizar uma função recursiva com computeIfAbsent lança ConcurrentModificationException no HashMap e IllegalStateException no ConcurrentHashMap. Veja o porquê e a correção.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="IZZR Labs">
+  <meta property="og:title" content="Seu cache com computeIfAbsent vai quebrar na recursão (HashMap e ConcurrentHashMap)">
+  <meta property="og:description" content="Memoizar uma função recursiva com computeIfAbsent lança ConcurrentModificationException no HashMap e IllegalStateException no ConcurrentHashMap. Veja o porquê e a correção.">
+  <meta property="og:url" content="https://izzrlabs.github.io/pt/blog/computeifabsent-recursive-update.html">
+  <meta property="og:image" content="https://izzrlabs.github.io/assets/img/izzrlabs-logo.png">
+  <meta property="og:image:alt" content="Logo da IZZR Labs: um ícone de frasco preto com as letras IZ, em fundo laranja">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://izzrlabs.github.io/pt/blog/computeifabsent-recursive-update.html">
+  <link rel="alternate" hreflang="en" href="https://izzrlabs.github.io/blog/computeifabsent-recursive-update.html">
+  <link rel="alternate" hreflang="pt-BR" href="https://izzrlabs.github.io/pt/blog/computeifabsent-recursive-update.html">
+  <link rel="alternate" hreflang="es" href="https://izzrlabs.github.io/es/blog/computeifabsent-recursive-update.html">
+  <link rel="alternate" hreflang="x-default" href="https://izzrlabs.github.io/blog/computeifabsent-recursive-update.html">
+  <link rel="alternate" type="application/rss+xml" title="IZZR Labs blog" href="https://izzrlabs.github.io/feed.xml">
+  <link rel="icon" href="../../favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="../../assets/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="../../assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Pular para o conteúdo</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="site-logo" href="../index.html">IZZR Labs</a>
+      <nav class="site-nav" aria-label="Principal">
+        <ul>
+          <li><a href="../index.html">Início</a></li>
+          <li><a href="../products.html">Produtos</a></li>
+          <li><a href="index.html" aria-current="page">Blog</a></li>
+          <li><a href="../about.html">Sobre</a></li>
+          <li><a href="../contact.html">Contato</a></li>
+        </ul>
+      </nav>
+      <nav class="lang-switch" aria-label="Idioma">
+        <ul>
+          <li><a href="../../blog/computeifabsent-recursive-update.html" lang="en" hreflang="en">EN</a></li>
+          <li><span aria-current="true">PT</span></li>
+          <li><a href="../../es/blog/computeifabsent-recursive-update.html" lang="es" hreflang="es">ES</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="section">
+      <div class="container prose">
+        <h1>Seu cache com computeIfAbsent vai quebrar na recursão (HashMap e ConcurrentHashMap)</h1>
+        <p class="post-meta"><time datetime="2026-11-19">19 de novembro de 2026</time> &middot; 5 min de leitura</p>
+
+        <p>Memoizar uma função recursiva com <code>computeIfAbsent</code> parece coisa de uma linha. Num <code>HashMap</code>, lança <code>ConcurrentModificationException</code>. Num <code>ConcurrentHashMap</code>, lança <code>IllegalStateException: Recursive update</code>. A correção tem três passos: <code>get</code>, calcular fora do map e depois <code>putIfAbsent</code>.</p>
+        <p>Tudo abaixo roda num arquivo só, <code>RecursiveMemo.java</code>, com <code>java RecursiveMemo.java</code> (sem Maven). A saída mostrada é do Java 17 (igual no 21).</p>
+        <h2>A versão inocente</h2>
+        <p>Fibonacci com cache. A recursão fica dentro da função de mapeamento:</p>
+        <pre><code>static long brokenFib(Map&lt;Integer, Long&gt; cache, int n) {
+    if (n &lt; 2) return n;
+    return cache.computeIfAbsent(n,
+            k -&gt; brokenFib(cache, k - 1) + brokenFib(cache, k - 2));
+}</code></pre>
+        <p>Lê bem, e parece exatamente o que o <code>computeIfAbsent</code> promete: "pega o valor, ou calcula e guarda".</p>
+        <h2>O que acontece quando você roda</h2>
+        <p>Chamei <code>brokenFib(map, 30)</code> em cada tipo de map:</p>
+        <pre><code>HashMap: java.util.ConcurrentModificationException
+ConcurrentHashMap: java.lang.IllegalStateException: Recursive update</code></pre>
+        <p>Mesmo código, dois maps, duas exceções diferentes, e nenhuma das mensagens diz o que você fez de errado.</p>
+        <h2>Por que falha</h2>
+        <p>O javadoc de <code>Map.computeIfAbsent</code> diz com todas as letras: a função de mapeamento não deve modificar este map durante o cálculo. Uma chamada recursiva que preenche o cache faz exatamente isso. Os dois maps só percebem de jeitos diferentes.</p>
+        <p><strong>HashMap.</strong> Desde o Java 9, o <code>HashMap.computeIfAbsent</code> guarda o seu <code>modCount</code> interno antes de chamar a sua função. Quando a função retorna, ele compara os dois números. As suas chamadas recursivas inseriram entradas, o contador mudou, e o map lança <code>ConcurrentModificationException</code>. O Java 8 não conferia, então o mesmo código podia corromper a tabela em silêncio. A exceção nova é o resultado melhor.</p>
+        <p><strong>ConcurrentHashMap.</strong> Quando o bin da chave está vazio, o <code>computeIfAbsent</code> coloca nele um marcador (um <code>ReservationNode</code>) e segura esse bin enquanto a sua função roda. Se a sua função cai de volta num bin que já está reservado, o map percebe uma atualização recursiva e lança a exceção. No Java 8, o mesmo código podia ficar em loop para sempre em vez de falhar rápido.</p>
+        <p>Um porém: a checagem do CHM é de melhor esforço. Ela dispara quando a recursão bate num bin reservado ou travado por uma chamada mais acima na pilha. Uma função recursiva cujas chaves caem em outros bins pode passar com algumas entradas e falhar com outras. Isso deixa pior, não mais seguro. O javadoc diz para não fazer, então não faça.</p>
+        <h2>A correção</h2>
+        <p>Faça a busca e o cálculo fora do map, e use o map só para guardar:</p>
+        <pre><code>static long fib(Map&lt;Integer, Long&gt; cache, int n) {
+    if (n &lt; 2) return n;
+    Long hit = cache.get(n);
+    if (hit != null) return hit;
+    long value = fib(cache, n - 1) + fib(cache, n - 2);
+    Long raced = cache.putIfAbsent(n, value);
+    return raced != null ? raced : value;
+}</code></pre>
+        <p>O <code>putIfAbsent</code> devolve o valor que já existe se outra thread chegou antes, então num <code>ConcurrentHashMap</code> todo mundo que chama ainda recebe a mesma resposta. Saída para os dois tipos de map:</p>
+        <pre><code>HashMap fib(90)             = 2880067194370816120
+ConcurrentHashMap fib(90)   = 2880067194370816120
+iterative fib(90)           = 2880067194370816120</code></pre>
+        <p>A terceira linha é a versão com loop, que nem precisa de map. Para Fibonacci, especificamente, o loop é a resposta melhor. O padrão <code>get</code> / calcular / <code>putIfAbsent</code> é para casos em que a recursão é de verdade, como uma árvore ou um grafo de dependências.</p>
+        <p>O custo: com esse padrão, duas threads podem calcular a mesma chave ao mesmo tempo, e um dos resultados vai fora. Para funções puras, isso não faz mal. Se o cálculo é caro ou tem efeitos colaterais, você precisa de outra coisa (veja a próxima seção).</p>
+        <h2>O que o computeIfAbsent garante de verdade</h2>
+        <p>Não jogue o método fora. No <code>ConcurrentHashMap</code>, a função roda no máximo uma vez por chave ausente, mesmo quando threads disputam. Testei com duas threads liberadas juntas por um <code>CountDownLatch</code>, as duas pedindo a mesma chave, com um <code>AtomicInteger</code> contando as chamadas:</p>
+        <pre><code>function calls = 1, value = loaded</code></pre>
+        <p>A segunda thread fica bloqueada no bin até a primeira terminar e depois lê o valor guardado. Isso faz do <code>computeIfAbsent</code> a ferramenta certa para "carregar essa coisa cara uma vez só": ler um arquivo de configuração, abrir uma conexão, montar um parser. Deixe a função o mais curta possível: outras escritas naquele bin esperam enquanto ela roda, e ela não pode mexer no map.</p>
+        <p>Resumindo:</p>
+        <ul>
+          <li>A função chama outro código que nunca mexe no map: use <code>computeIfAbsent</code>.</li>
+          <li>A função faz recursão pelo mesmo map: use <code>get</code>, calcule, <code>putIfAbsent</code>, ou um loop.</li>
+        </ul>
+        <h2>A execução completa</h2>
+        <p>Esta é a saída completa de <code>java RecursiveMemo.java</code>, copiada de uma execução real no Java 17:</p>
+        <figure class="terminal terminal--post">
+          <figcaption class="terminal__title">RecursiveMemo.java <span class="visually-hidden">&mdash; saída completa, Java 17</span></figcaption>
+          <pre class="terminal__log" data-retype>$ java RecursiveMemo.java
+== (a) recursive computeIfAbsent ==
+HashMap: java.util.ConcurrentModificationException
+ConcurrentHashMap: java.lang.IllegalStateException: Recursive update
+== (b) fixed ==
+HashMap fib(90)             = 2880067194370816120
+ConcurrentHashMap fib(90)   = 2880067194370816120
+iterative fib(90)           = 2880067194370816120
+== (c) two threads, same key ==
+function calls = 1, value = loaded</pre>
+        </figure>
+        <p>A última linha é a que vale lembrar. Duas threads pediram a mesma chave; o carregamento rodou uma vez.</p>
+
+        <h2>Onde isso aparece em entrevista</h2>
+        <p>"O que acontece se duas threads chamam <code>computeIfAbsent</code> na mesma chave?" é uma pergunta clássica de entrevista de Java, e a versão recursiva é a pergunta seguinte que separa quem leu o javadoc de quem só usou o método.</p>
+        <p>O capítulo 1 do meu <a href="https://izzrlabs.gumroad.com/l/kxtubc" target="_blank" rel="noopener">Modern Java &amp; Spring Boot Interview Guide</a> (Core Java &amp; Collections) cobre o funcionamento interno do HashMap e as coleções concorrentes, e o guia vem com um repositório Maven de testes JUnit 5 que você roda com <code>mvn test</code>. Custa US$ 29, pagamento único. O guia é em inglês. O código deste post é separado e independente: copie o <code>RecursiveMemo.java</code>, rode, e mexa até as exceções pararem de te surpreender.</p>
+
+        <p class="author">Israel Duarte, engenheiro Java &mdash; escrevo o código primeiro e as afirmações depois: cada regra deste post saiu de um script que roda de verdade, não de um slide. Veja o que mais eu <a href="../products.html">criei</a>.</p>
+
+        <aside class="newsletter" aria-labelledby="newsletter-title">
+          <h2 id="newsletter-title">Receba os posts novos por e-mail</h2>
+          <p>Um e-mail curto quando sai post novo: o título, um resumo de uma linha e o link. O aviso chega em inglês. Para sair, é um clique.</p>
+          <form class="newsletter__form" action="https://buttondown.com/api/emails/embed-subscribe/israeltduarte" method="post">
+            <label for="newsletter-email">Seu e-mail</label>
+            <div class="newsletter__row">
+              <input type="email" id="newsletter-email" name="email" required autocomplete="email">
+              <button class="btn btn--primary" type="submit">Inscrever</button>
+            </div>
+          </form>
+          <p class="newsletter__note muted">Seu e-mail fica no Buttondown, nosso serviço de newsletter, e só é usado para esses avisos. <a href="../privacy.html">Privacidade</a>.</p>
+        </aside>
+
+        <p><a href="index.html">Voltar para o Blog</a></p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 IZZR Labs</p>
+      <ul class="footer-links">
+        <li><a href="../privacy.html">Privacidade</a></li>
+        <li><a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">Loja no Gumroad</a></li>
+        <li><a href="https://github.com/izzrlabs" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+    </div>
+  </footer>
+  <script src="../../assets/js/terminal.js" defer></script>
+</body>
+</html>
