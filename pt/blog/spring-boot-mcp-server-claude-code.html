@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transforme um serviço Spring Boot em um servidor MCP que o Claude Code pode chamar (Spring AI 2.1) — IZZR Labs</title>
+  <meta name="description" content="Um starter e uma anotação @McpTool expõem um serviço Spring via MCP. No Spring AI 2.1.0 você também precisa de protocol=streamable, senão /mcp responde 404.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="IZZR Labs">
+  <meta property="og:title" content="Transforme um serviço Spring Boot em um servidor MCP que o Claude Code pode chamar (Spring AI 2.1)">
+  <meta property="og:description" content="Um starter e uma anotação @McpTool expõem um serviço Spring via MCP. No Spring AI 2.1.0 você também precisa de protocol=streamable, senão /mcp responde 404.">
+  <meta property="og:url" content="https://izzrlabs.github.io/pt/blog/spring-boot-mcp-server-claude-code.html">
+  <meta property="og:image" content="https://izzrlabs.github.io/assets/img/izzrlabs-logo.png">
+  <meta property="og:image:alt" content="Logo da IZZR Labs: um ícone de frasco preto com as letras IZ, em fundo laranja">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://izzrlabs.github.io/pt/blog/spring-boot-mcp-server-claude-code.html">
+  <link rel="alternate" hreflang="en" href="https://izzrlabs.github.io/blog/spring-boot-mcp-server-claude-code.html">
+  <link rel="alternate" hreflang="pt-BR" href="https://izzrlabs.github.io/pt/blog/spring-boot-mcp-server-claude-code.html">
+  <link rel="alternate" hreflang="es" href="https://izzrlabs.github.io/es/blog/spring-boot-mcp-server-claude-code.html">
+  <link rel="alternate" hreflang="x-default" href="https://izzrlabs.github.io/blog/spring-boot-mcp-server-claude-code.html">
+  <link rel="alternate" type="application/rss+xml" title="IZZR Labs blog" href="https://izzrlabs.github.io/feed.xml">
+  <link rel="icon" href="../../favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="../../assets/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="../../assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Pular para o conteúdo</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="site-logo" href="../index.html">IZZR Labs</a>
+      <nav class="site-nav" aria-label="Principal">
+        <ul>
+          <li><a href="../index.html">Início</a></li>
+          <li><a href="../products.html">Produtos</a></li>
+          <li><a href="index.html" aria-current="page">Blog</a></li>
+          <li><a href="../about.html">Sobre</a></li>
+          <li><a href="../contact.html">Contato</a></li>
+        </ul>
+      </nav>
+      <nav class="lang-switch" aria-label="Idioma">
+        <ul>
+          <li><a href="../../blog/spring-boot-mcp-server-claude-code.html" lang="en" hreflang="en">EN</a></li>
+          <li><span aria-current="true">PT</span></li>
+          <li><a href="../../es/blog/spring-boot-mcp-server-claude-code.html" lang="es" hreflang="es">ES</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <article class="section">
+      <div class="container prose">
+        <h1>Transforme um serviço Spring Boot em um servidor MCP que o Claude Code pode chamar (Spring AI 2.1)</h1>
+        <p class="post-meta"><time datetime="2026-11-26">26 de novembro de 2026</time> &middot; 5 min de leitura</p>
+
+        <p>Um agente de código consegue ler o seu código, mas não enxerga o que o serviço sabe em tempo de execução. O MCP (Model Context Protocol) permite que ele pergunte: a aplicação publica ferramentas, e um cliente como o Claude Code pode listá-las e chamá-las. No Spring AI 2.1.0 isso pede um starter, um método anotado e uma propriedade fácil de esquecer. Sem ela, <code>/mcp</code> responde 404.</p>
+        <p>Tudo o que aparece aqui foi executado no JDK 17 com Spring AI 2.1.0 e Spring Boot 4.2.0. Nenhuma chave de API de LLM é usada.</p>
+        <h2>Dependências</h2>
+        <pre><code>&lt;parent&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+    &lt;version&gt;4.2.0&lt;/version&gt;
+    &lt;relativePath/&gt;
+&lt;/parent&gt;
+
+&lt;properties&gt;
+    &lt;java.version&gt;17&lt;/java.version&gt;
+    &lt;spring-ai.version&gt;2.1.0&lt;/spring-ai.version&gt;
+&lt;/properties&gt;
+
+&lt;dependencyManagement&gt;
+    &lt;dependencies&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-ai-bom&lt;/artifactId&gt;
+            &lt;version&gt;${spring-ai.version}&lt;/version&gt;
+            &lt;type&gt;pom&lt;/type&gt;
+            &lt;scope&gt;import&lt;/scope&gt;
+        &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+&lt;/dependencyManagement&gt;
+
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-ai-starter-mcp-server-webmvc&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+        &lt;scope&gt;test&lt;/scope&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;</code></pre>
+        <p>O <code>spring-ai-bom</code> só gerencia versões do Spring AI; ele não traz o Spring Boot. Aqui a versão do Boot vem do <code>spring-boot-starter-parent</code> 4.2.0, a mesma que as próprias dependências do starter de MCP declaram.</p>
+        <h2>Uma ferramenta</h2>
+        <p>Além da classe <code>@SpringBootApplication</code> de sempre, um record e um serviço em memória bastam:</p>
+        <pre><code>package com.example.orders;
+
+import java.math.BigDecimal;
+
+public record Order(String id, String customer, String status, BigDecimal total) {
+}</code></pre>
+        <pre><code>package com.example.orders;
+
+import java.math.BigDecimal;
+import java.util.Map;
+
+import org.springframework.ai.mcp.annotation.McpTool;
+import org.springframework.ai.mcp.annotation.McpToolParam;
+import org.springframework.stereotype.Service;
+
+@Service
+public class OrderService {
+
+    private final Map&lt;String, Order&gt; orders = Map.of(
+            "ORD-1001", new Order("ORD-1001", "Ana", "SHIPPED", new BigDecimal("149.90")),
+            "ORD-1002", new Order("ORD-1002", "Bruno", "PAYMENT_PENDING", new BigDecimal("39.00")));
+
+    @McpTool(name = "get_order",
+            description = "Look up one order by its id and return its customer, status and total",
+            annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
+    public Order getOrder(
+            @McpToolParam(description = "Order id, for example ORD-1001", required = true) String orderId) {
+        Order order = orders.get(orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("No order with id " + orderId);
+        }
+        return order;
+    }
+}</code></pre>
+        <p><code>@McpTool</code> e <code>@McpToolParam</code> ficam em <code>org.springframework.ai.mcp.annotation</code>. As descrições são o que o cliente recebe para decidir quando chamar a ferramenta e o que passar, então escreva pensando nesse leitor.</p>
+        <h2>A propriedade que não dá para pular</h2>
+        <p>Comece só com o nome do servidor:</p>
+        <pre><code>spring.ai.mcp.server.name=orders</code></pre>
+        <p>A aplicação sobe e registra <code>Registered tools: 1</code> no log. Mas uma requisição para <code>/mcp</code> falha:</p>
+        <pre><code>$ curl -i -s -X POST http://localhost:8089/mcp -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" -d &lt;initialize&gt;
+HTTP/1.1 404 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 26 Nov 2026 03:02:12 GMT
+
+{"timestamp":"2026-11-26T03:02:12.719Z","status":404,"error":"Not Found","path":"/mcp"}
+
+$ curl -i -s -m 3 http://localhost:8089/sse
+HTTP/1.1 200 
+Cache-Control: no-cache
+Content-Type: text/event-stream
+Transfer-Encoding: chunked
+Date: Thu, 26 Nov 2026 03:02:12 GMT
+
+event:endpoint
+data: /mcp/message?sessionId=581046d8-c805-4039-928c-5f377153cceb
+
+[curl exit 28: 28 = timeout, the stream stays open]</code></pre>
+        <p>Só com o nome configurado, a 2.1.0 sobe o transporte antigo, <strong>SSE</strong>. <code>/sse</code> responde 200 e <code>/mcp</code> não existe.</p>
+        <p>Isso confunde porque os metadados de configuração listam <code>streamable</code> como valor padrão de <code>spring.ai.mcp.server.protocol</code>. As condições da autoconfiguração dizem outra coisa: a do SSE tem <code>matchIfMissing=true</code> e a do streamable tem <code>matchIfMissing=false</code>. Se você não define nada, o SSE vence.</p>
+        <p>Um teste de integração pega o problema na hora:</p>
+        <pre><code>[...]
+2026-11-26T00:01:31.532-03:00  INFO 34466 --- [           main] o.s.a.m.s.c.a.McpServerAutoConfiguration : Registered tools: 1
+[...]
+2026-11-26T00:01:31.587-03:00  INFO 34466 --- [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 57031 (http) with context path '/'
+[...]
+[ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 1.417 s &lt;&lt;&lt; FAILURE! -- in com.example.orders.OrdersMcpServerTest
+[...]
+Caused by: io.modelcontextprotocol.spec.McpTransportException: Server Not Found. Status code:404, response body: {"timestamp":"2026-11-26T03:01:32.058Z","status":404,"error":"Not Found","path":"/mcp"}
+[...]
+[ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0
+[...]
+[INFO] BUILD FAILURE
+[...]</code></pre>
+        <p>A correção é a segunda linha:</p>
+        <pre><code>spring.ai.mcp.server.name=orders
+spring.ai.mcp.server.protocol=streamable</code></pre>
+        <p>(Na 2.1.0, as propriedades <code>sse-endpoint</code> e <code>sse-message-endpoint</code> também estão marcadas como deprecated.)</p>
+        <h2>Um teste que fala MCP</h2>
+        <p>O teste sobe a aplicação em uma porta aleatória e usa o cliente do MCP Java SDK para listar as ferramentas e chamar uma delas. Este é o corpo do método de teste, dentro de um <code>@SpringBootTest</code> com <code>webEnvironment = RANDOM_PORT</code>:</p>
+        <pre><code>var transport = HttpClientStreamableHttpTransport.builder("http://localhost:" + port).build();
+try (McpSyncClient client = McpClient.sync(transport).build()) {
+    client.initialize();
+
+    assertThat(client.listTools().tools())
+            .extracting(McpSchema.Tool::name)
+            .containsExactly("get_order");
+
+    var result = client.callTool(McpSchema.CallToolRequest.builder("get_order")
+            .arguments(Map.of("orderId", "ORD-1002"))
+            .build());
+
+    assertThat(result.isError()).isNotEqualTo(Boolean.TRUE);
+    assertThat(result.content().get(0).toString()).contains("PAYMENT_PENDING");
+}</code></pre>
+        <p>Com <code>protocol=streamable</code>:</p>
+        <pre><code>[...]
+2026-11-26T00:02:17.938-03:00  INFO 34671 --- [           main] o.s.a.m.s.c.a.McpServerAutoConfiguration : Registered tools: 1
+[...]
+2026-11-26T00:02:17.991-03:00  INFO 34671 --- [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 57048 (http) with context path '/'
+[...]
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.400 s -- in com.example.orders.OrdersMcpServerTest
+[...]
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[...]
+[INFO] BUILD SUCCESS
+[...]</code></pre>
+        <h2>Confira com curl</h2>
+        <p>A porta 8080 estava ocupada na máquina de teste, então tudo roda na 8089:</p>
+        <pre><code>mvn -B spring-boot:run -Dspring-boot.run.arguments=--server.port=8089</code></pre>
+        <p>Primeiro, o <code>initialize</code>. Guarde o cabeçalho <code>Mcp-Session-Id</code> da resposta, porque as próximas requisições o enviam de volta:</p>
+        <pre><code>$ curl -i -s -X POST http://localhost:8089/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream'  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"curl","version":"1.0"}}}'
+HTTP/1.1 200 
+Mcp-Session-Id: 1dc2a31d-4f08-4495-b34e-b0a3253d309e
+Content-Type: application/json
+Content-Length: 273
+Date: Thu, 26 Nov 2026 03:02:21 GMT
+
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"completions":{},"logging":{},"prompts":{"listChanged":true},"resources":{"subscribe":false,"listChanged":true},"tools":{"listChanged":true}},"serverInfo":{"name":"orders","version":"1.0.0"}}}</code></pre>
+        <p>Depois confirme a sessão:</p>
+        <pre><code>$ curl -i -s -X POST http://localhost:8089/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -H 'Mcp-Session-Id: 1dc2a31d-4f08-4495-b34e-b0a3253d309e' -d '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+HTTP/1.1 202 
+Content-Length: 0
+Date: Thu, 26 Nov 2026 03:02:21 GMT</code></pre>
+        <p>O <code>tools/list</code> mostra o schema montado a partir do seu método (alguns cabeçalhos cortados):</p>
+        <pre><code>$ curl -i -s -X POST http://localhost:8089/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -H 'Mcp-Session-Id: 1dc2a31d-4f08-4495-b34e-b0a3253d309e' -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+HTTP/1.1 200 
+[...]
+data: {"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"get_order","title":"get_order","description":"Look up one order by its id and return its customer, status and total","inputSchema":{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","properties":{"orderId":{"type":"string","description":"Order id, for example ORD-1001"}},"required":["orderId"]},"annotations":{"title":"","readOnlyHint":true,"destructiveHint":false,"idempotentHint":false,"openWorldHint":true}}]}}</code></pre>
+        <p>Repare nas anotações. <code>readOnlyHint</code> e <code>destructiveHint</code> são o que o código declarou; <code>openWorldHint</code> saiu <code>true</code> porque não definimos esse valor.</p>
+        <p>Agora o <code>tools/call</code>, uma vez com um pedido que existe e outra com um que não existe:</p>
+        <pre><code>$ curl -i -s -X POST http://localhost:8089/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -H 'Mcp-Session-Id: 1dc2a31d-4f08-4495-b34e-b0a3253d309e' -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_order","arguments":{"orderId":"ORD-1002"}}}'
+HTTP/1.1 200 
+[...]
+data: {"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"{\"id\":\"ORD-1002\",\"customer\":\"Bruno\",\"status\":\"PAYMENT_PENDING\",\"total\":39.00}"}],"isError":false}}
+
+$ curl -i -s -X POST http://localhost:8089/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -H 'Mcp-Session-Id: 1dc2a31d-4f08-4495-b34e-b0a3253d309e' -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"get_order","arguments":{"orderId":"ORD-9999"}}}'
+HTTP/1.1 200 
+[...]
+data: {"jsonrpc":"2.0","id":4,"result":{"content":[{"type":"text","text":"No order with id ORD-9999\nNo order with id ORD-9999"}],"isError":true}}</code></pre>
+        <p>A exceção não vira um erro HTTP. Ela volta como uma resposta normal, com <code>isError: true</code> e a sua mensagem (repetida em duas linhas nesta versão). Escreva mensagens de exceção com as quais quem chama consiga agir.</p>
+        <h2>Conecte o Claude Code</h2>
+        <p>Com a aplicação ainda rodando, registre o servidor. Isto foi executado com o Claude Code 2.1.220:</p>
+        <figure class="terminal terminal--post">
+          <figcaption class="terminal__title">Claude Code 2.1.220 <span class="visually-hidden">&mdash; mcp add e mcp list, saída com caminhos encurtados</span></figcaption>
+          <pre class="terminal__log" data-retype>$ claude --version
+2.1.220 (Claude Code)
+[exit 0]
+
+$ claude mcp add --transport http orders http://localhost:8089/mcp
+Added HTTP MCP server orders with URL: http://localhost:8089/mcp to local config
+File modified: [path shortened] [project: [path shortened]]
+[exit 0]
+
+$ claude mcp list
+Checking MCP server health…
+
+orders: http://localhost:8089/mcp (HTTP) - <span class="terminal__ok">✔ Connected</span>
+[exit 0]</pre>
+        </figure>
+        <p><code>✔ Connected</code> significa que a CLI alcançou o servidor e a verificação de saúde passou. <strong>Não</strong> rodamos uma sessão do Claude Code chamando <code>get_order</code>, então este post não mostra essa saída. As chamadas de ferramenta comprovadas aqui são as feitas pelo curl e pelo teste JUnit.</p>
+        <p>Mais um detalhe dos logs: a aplicação imprimiu algumas linhas <code>Error setting socket options</code> do Tomcat por volta do momento das verificações da CLI. O servidor continuou aparecendo como conectado. Não investigamos a causa.</p>
+        <h2>Antes de expor algo real</h2>
+        <ul>
+          <li><strong>Este exemplo não tem autenticação.</strong> Use apenas em localhost. O Spring Boot escuta em todas as interfaces de rede por padrão, então considere <code>server.address=127.0.0.1</code> (não fez parte das execuções acima).</li>
+          <li><strong>Comece com ferramentas somente de leitura.</strong> <code>readOnlyHint</code> é uma descrição para o cliente, não uma checagem de permissão. Um método que grava dados precisa de autorização de verdade do seu lado.</li>
+          <li><strong>Retorne só o que quem chama precisa.</strong> O que uma ferramenta devolve pode acabar no contexto do modelo.</li>
+        </ul>
+        <h2>Onde entra o Claude Code Kit</h2>
+        <p>Se você também quer o Claude Code configurado para o próprio repositório, o <a href="https://izzrlabs.gumroad.com/l/weloxy" target="_blank" rel="noopener">Claude Code Kit for Java &amp; Spring Boot</a> (produto em inglês) é um kit <code>.claude/</code> com subagentes, skills, slash commands e hooks (incluindo um hook <code>Stop</code> que impede o Claude de encerrar um turno enquanto o build está quebrado), 5 modelos de <code>CLAUDE.md</code>, uma aplicação Spring Boot de exemplo (Java 21, Spring Boot 4.1.2, 18 testes passando) e um guia em Markdown. Custa US$ 39, pagamento único. É um produto separado deste tutorial e não lista um servidor MCP no conteúdo.</p>
+
+        <p class="author">Israel Duarte, engenheiro Java &mdash; escrevo o código primeiro e as afirmações depois: toda saída deste post veio de código que rodou de verdade, e o que não rodou está marcado. Veja o que mais eu <a href="../products.html">criei</a>.</p>
+
+        <aside class="newsletter" aria-labelledby="newsletter-title">
+          <h2 id="newsletter-title">Receba os posts novos por e-mail</h2>
+          <p>Um e-mail curto quando sai post novo: o título, um resumo de uma linha e o link. O aviso chega em inglês. Para sair, é um clique.</p>
+          <form class="newsletter__form" action="https://buttondown.com/api/emails/embed-subscribe/israeltduarte" method="post">
+            <label for="newsletter-email">Seu e-mail</label>
+            <div class="newsletter__row">
+              <input type="email" id="newsletter-email" name="email" required autocomplete="email">
+              <button class="btn btn--primary" type="submit">Inscrever</button>
+            </div>
+          </form>
+          <p class="newsletter__note muted">Seu e-mail fica no Buttondown, nosso serviço de newsletter, e só é usado para esses avisos. <a href="../privacy.html">Privacidade</a>.</p>
+        </aside>
+
+        <p><a href="index.html">Voltar para o Blog</a></p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 IZZR Labs</p>
+      <ul class="footer-links">
+        <li><a href="../privacy.html">Privacidade</a></li>
+        <li><a href="https://izzrlabs.gumroad.com" target="_blank" rel="noopener">Loja no Gumroad</a></li>
+        <li><a href="https://github.com/izzrlabs" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+    </div>
+  </footer>
+  <script src="../../assets/js/terminal.js" defer></script>
+</body>
+</html>

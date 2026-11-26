@@ -7,6 +7,13 @@
     <description>Short, practical write-ups on Java, Spring Boot, and using Claude Code on real codebases.</description>
     <language>en</language>
     <item>
+      <title>Turn a Spring Boot service into an MCP server Claude Code can call (Spring AI 2.1)</title>
+      <link>https://izzrlabs.github.io/blog/spring-boot-mcp-server-claude-code.html</link>
+      <guid>https://izzrlabs.github.io/blog/spring-boot-mcp-server-claude-code.html</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 +0000</pubDate>
+      <description>One starter and one @McpTool annotation expose a Spring service over MCP. In Spring AI 2.1.0 you also need protocol=streamable, or /mcp returns 404.</description>
+    </item>
+    <item>
       <title>Your computeIfAbsent cache will crash on recursion (HashMap and ConcurrentHashMap)</title>
       <link>https://izzrlabs.github.io/blog/computeifabsent-recursive-update.html</link>
       <guid>https://izzrlabs.github.io/blog/computeifabsent-recursive-update.html</guid>
