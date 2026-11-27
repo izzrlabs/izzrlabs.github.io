@@ -33,13 +33,6 @@
           <li><a href="/contact.html">Contact</a></li>
         </ul>
       </nav>
-      <nav class="lang-switch" aria-label="Language">
-        <ul>
-          <li><span aria-current="true">EN</span></li>
-          <li><a href="/pt/index.html" lang="pt-BR" hreflang="pt-BR">PT</a></li>
-          <li><a href="/es/index.html" lang="es" hreflang="es">ES</a></li>
-        </ul>
-      </nav>
     </div>
   </header>
 
@@ -50,19 +43,39 @@
         <!-- The plain-language line comes before the stack trace in the HTML
              (not just visually) so a screen reader reaches the real answer
              before the decorative "exception". -->
-        <p class="muted" id="notfound-help" data-pt="Essa página não existe, ou mudou de lugar. Os links acima levam de volta para o site." data-es="Esta página no existe, o cambió de lugar. Los enlaces de arriba te llevan de vuelta al sitio.">That page doesn't exist, or it moved. The links above take you back into the site.</p>
+        <p class="muted" id="notfound-help">That page doesn't exist, or it moved. The links above take you back into the site.</p>
         <figure class="terminal">
           <figcaption class="terminal__title">izzrlabs ~ 404</figcaption>
           <pre class="terminal__log terminal__log--trace"><span class="terminal__err">Exception in thread "main" izzrlabs.PageNotFoundException: this page doesn't exist (or it moved)</span>
-    at izzrlabs.Home.index(<a class="trace-link" href="/" data-path="">/</a>)
-    at izzrlabs.Products.list(<a class="trace-link" href="/products.html" data-path="products.html">/products.html</a>)
-    at izzrlabs.Blog.latest(<a class="trace-link" href="/blog/" data-path="blog/">/blog/</a>)</pre>
+    at izzrlabs.Home.index(<a class="trace-link" href="/">/</a>)
+    at izzrlabs.Products.list(<a class="trace-link" href="/products.html">/products.html</a>)
+    at izzrlabs.Blog.latest(<a class="trace-link" href="/blog/">/blog/</a>)</pre>
         </figure>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
+    <div class="container container--news">
+      <section class="footer-newsletter" aria-labelledby="footer-newsletter-title">
+        <p class="footer-newsletter__bar" aria-hidden="true">subscribe.sh</p>
+        <div class="footer-newsletter__body">
+          <div class="footer-newsletter__text">
+            <h2 id="footer-newsletter-title">Get new posts by email</h2>
+            <p>One short email when a new post goes up: the title, a one-line summary and the link. Unsubscribe in one click.</p>
+          </div>
+          <form class="newsletter__form" action="https://buttondown.com/api/emails/embed-subscribe/israeltduarte" method="post" aria-labelledby="footer-newsletter-title">
+            <label for="footer-email">Your email</label>
+            <div class="footer-newsletter__field">
+              <span class="footer-newsletter__prompt" aria-hidden="true">$</span>
+              <input type="email" id="footer-email" name="email" required autocomplete="email">
+              <button class="btn btn--primary" type="submit">Subscribe</button>
+            </div>
+            <p class="newsletter__note muted">Your email is kept by Buttondown, our newsletter service, and used only for these emails. <a href="/privacy.html">Privacy</a>.</p>
+          </form>
+        </div>
+      </section>
+    </div>
     <div class="container">
       <p>&copy; 2026 IZZR Labs</p>
       <ul class="footer-links">
@@ -72,6 +85,5 @@
       </ul>
     </div>
   </footer>
-  <script src="/assets/js/notfound.js" defer></script>
 </body>
 </html>

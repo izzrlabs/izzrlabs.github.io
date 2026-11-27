@@ -14,10 +14,6 @@
   <meta property="og:image:alt" content="IZZR Labs logo: a black flask icon with the letters IZ, on an orange background">
   <meta name="twitter:card" content="summary">
   <link rel="canonical" href="https://izzrlabs.github.io/">
-  <link rel="alternate" hreflang="en" href="https://izzrlabs.github.io/">
-  <link rel="alternate" hreflang="pt-BR" href="https://izzrlabs.github.io/pt/">
-  <link rel="alternate" hreflang="es" href="https://izzrlabs.github.io/es/">
-  <link rel="alternate" hreflang="x-default" href="https://izzrlabs.github.io/">
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" type="image/png" href="assets/img/favicon-32.png">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
@@ -35,13 +31,6 @@
           <li><a href="blog/index.html">Blog</a></li>
           <li><a href="about.html">About</a></li>
           <li><a href="contact.html">Contact</a></li>
-        </ul>
-      </nav>
-      <nav class="lang-switch" aria-label="Language">
-        <ul>
-          <li><span aria-current="true">EN</span></li>
-          <li><a href="pt/index.html" lang="pt-BR" hreflang="pt-BR">PT</a></li>
-          <li><a href="es/index.html" lang="es" hreflang="es">ES</a></li>
         </ul>
       </nav>
     </div>
@@ -138,6 +127,26 @@
   </main>
 
   <footer class="site-footer">
+    <div class="container container--news">
+      <section class="footer-newsletter" aria-labelledby="footer-newsletter-title">
+        <p class="footer-newsletter__bar" aria-hidden="true">subscribe.sh</p>
+        <div class="footer-newsletter__body">
+          <div class="footer-newsletter__text">
+            <h2 id="footer-newsletter-title">Get new posts by email</h2>
+            <p>One short email when a new post goes up: the title, a one-line summary and the link. Unsubscribe in one click.</p>
+          </div>
+          <form class="newsletter__form" action="https://buttondown.com/api/emails/embed-subscribe/israeltduarte" method="post" aria-labelledby="footer-newsletter-title">
+            <label for="footer-email">Your email</label>
+            <div class="footer-newsletter__field">
+              <span class="footer-newsletter__prompt" aria-hidden="true">$</span>
+              <input type="email" id="footer-email" name="email" required autocomplete="email">
+              <button class="btn btn--primary" type="submit">Subscribe</button>
+            </div>
+            <p class="newsletter__note muted">Your email is kept by Buttondown, our newsletter service, and used only for these emails. <a href="privacy.html">Privacy</a>.</p>
+          </form>
+        </div>
+      </section>
+    </div>
     <div class="container">
       <p>&copy; 2026 IZZR Labs</p>
       <ul class="footer-links">
